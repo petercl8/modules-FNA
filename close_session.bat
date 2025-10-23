@@ -1,15 +1,30 @@
 @echo off
-:: ===== Close Session =====
+:: ==============================
+:: Close Session: Commit & Push All Changes
+:: ==============================
 
-:: Optional final push
+:: Ask if user wants to push remaining changes
 set /p pushfinal=Push any remaining changes before closing? (y/n): 
 if /i "%pushfinal%"=="y" (
-    git add .
+
+    :: Stage all changes
+    git add -A
+
+    :: Prompt for commit message
     set /p msg=Enter commit message: 
     if "%msg%"=="" set msg=Final update
-    git commit -m "%msg%" 2>nul || echo No changes to commit.
+
+    :: Only commit if there are staged changes
+    git diff --cached --quiet
+    if %errorlevel%==1 (
+        git commit -m "%msg%"
+    ) else (
+        echo No changes to commit.
+    )
+
+    :: Push commits to the main branch
     git push origin main
-    echo Final changes pushed.
 )
 
 echo Session closed.
+pause

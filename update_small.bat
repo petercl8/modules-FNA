@@ -1,13 +1,21 @@
 @echo off
-:: ===== Quick Update =====
+:: ==============================
+:: Automatic Update: Commit & Push
+:: ==============================
 
-:: Stage all changes
-git add .
+:: Stage all changes (new, modified, deleted files)
+git add -A
 
-:: Commit with default message
-git commit -m "Small edit" 2>nul || echo No changes to commit.
+:: Commit changes with default message
+:: - If there are no changes, skip committing
+git diff --cached --quiet
+if %errorlevel%==1 (
+    git commit -m "Quick automatic update"
+) else (
+    echo No changes to commit.
+)
 
-:: Push to origin main (SSH)
+:: Push commits to the 'main' branch on the remote 'origin'
 git push origin main
 
-echo Small changes pushed to GitHub.
+echo Update complete!
