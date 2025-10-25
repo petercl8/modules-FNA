@@ -1,3 +1,4 @@
+import importlib
 
 def install_required_packages(force_reinstall=False, include_optional=True):
     """
