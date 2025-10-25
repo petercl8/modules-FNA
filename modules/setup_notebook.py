@@ -1,4 +1,7 @@
 import importlib
+import subprocess
+import sys
+import os
 
 def install_required_packages(force_reinstall=False, include_optional=True):
     """
