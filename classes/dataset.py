@@ -1,3 +1,7 @@
+import torch
+from torch import nn
+
+
 def NpArrayDataLoader(image_array, sino_array, config, image_size = 90, sino_size=90, image_channels=1, sino_channels=1, augment=False, index=0):
     '''
     Function to load an image and a sinogram. Returns 4 pytorch tensors: the original dataset sinogram and image,
