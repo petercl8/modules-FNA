@@ -54,7 +54,7 @@ def install_required_packages(force_reinstall=False, include_optional=True):
     print(f"📦 Installing missing packages: {', '.join(missing)}")
 
     # Build pip command
-    if in_colab:
+    if IN_COLAB:
         cmd = ["pip", "install", "--upgrade"] + missing
     else:
         cmd = [sys.executable, "-m", "pip", "install", "--upgrade"] + missing
