@@ -1,7 +1,6 @@
 import importlib
 import subprocess
 import sys
-import os
 
 def install_required_packages(force_reinstall=False, include_optional=True):
     """
@@ -23,14 +22,6 @@ def install_required_packages(force_reinstall=False, include_optional=True):
     optional_packages = ["tensorboard"]
     # Widgets for tqdm are optional; plain progress bar is fine
     widgets_packages = ["ipywidgets"]
-
-    # Detect environment
-    try:
-        import google.colab
-        in_colab = True
-    except ImportError:
-        in_colab = False
-
     missing = []
 
     for pkg in packages:
@@ -74,6 +65,7 @@ def install_required_packages(force_reinstall=False, include_optional=True):
     except subprocess.CalledProcessError as e:
         print(f"❌ Installation failed: {e}")
 
+
 def setup_project_dirs(project_local_dirPath, project_colab_dirPath=None, mount_colab_drive=True):
     """
     Sets up project directories and adds the project path to sys.path.
@@ -92,13 +84,7 @@ def setup_project_dirs(project_local_dirPath, project_colab_dirPath=None, mount_
     str
         The path being used for the project (Colab or local).
     """
-    # --- Detect environment ---
-    try:
-        import google.colab
-        IN_COLAB = True
-    except ImportError:
-        IN_COLAB = False
-
+  
     # --- Determine project directory ---
     if IN_COLAB and project_colab_dirPath is not None:
         if mount_colab_drive:
