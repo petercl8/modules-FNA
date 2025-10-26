@@ -1,4 +1,4 @@
-import torch
+#import torch
 from torch import nn
 
 
@@ -43,7 +43,7 @@ def NpArrayDataLoader(image_array, sino_array, config, image_size = 90, sino_siz
             image_multChannel:    image to rotate. Shape: (C, H, W)
             sinogram_multChannel: sinogram to rotate. Shape: (C, H, W)
             '''
-
+        
         def IntersectCircularBorder(image):
             '''
             Function for determining whether an image itersects a circular boundary inscribed within the square FOV.
