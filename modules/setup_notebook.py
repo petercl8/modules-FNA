@@ -2,7 +2,7 @@ import importlib
 import subprocess
 import sys
 
-def install_required_packages(force_reinstall=False, include_optional=True):
+def install_required_packages(IN_COLAB, force_reinstall=False, include_optional=True):
     """
     Installs required Python packages efficiently.
     - Detects if running in Colab or locally.
@@ -66,7 +66,7 @@ def install_required_packages(force_reinstall=False, include_optional=True):
         print(f"❌ Installation failed: {e}")
 
 
-def setup_project_dirs(project_local_dirPath, project_colab_dirPath=None, mount_colab_drive=True):
+def setup_project_dirs(IN_COLAB, project_local_dirPath, project_colab_dirPath=None, mount_colab_drive=True):
     """
     Sets up project directories and adds the project path to sys.path.
     
