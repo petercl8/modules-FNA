@@ -2,9 +2,6 @@ from torch import nn
 import torch
 
 
-def small_test(x):
-    print(x+2)
-
 ######################################
 ##### Block Generating Functions #####
 ######################################
