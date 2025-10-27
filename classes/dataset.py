@@ -37,13 +37,13 @@ def NpArrayDataLoader(image_array, sino_array, config, image_size = 90, sino_siz
 
     ## Data Augmentation Functions ##
     def RandRotate(image_multChannel, sinogram_multChannel):
-            '''
-            Function for randomly rotating an image and its sinogram. If the image intersects the edge of the FOV, no rotation is applied.
+        '''
+        Function for randomly rotating an image and its sinogram. If the image intersects the edge of the FOV, no rotation is applied.
 
-            image_multChannel:    image to rotate. Shape: (C, H, W)
-            sinogram_multChannel: sinogram to rotate. Shape: (C, H, W)
-            '''
-        
+        image_multChannel:    image to rotate. Shape: (C, H, W)
+        sinogram_multChannel: sinogram to rotate. Shape: (C, H, W)
+        '''
+
         def IntersectCircularBorder(image):
             '''
             Function for determining whether an image itersects a circular boundary inscribed within the square FOV.
@@ -78,7 +78,7 @@ def NpArrayDataLoader(image_array, sino_array, config, image_size = 90, sino_siz
                         +torch.sum(image[:,:,0]).item() + torch.sum(image[:,:,max_idx]).item()
             return_value = False if margin_sum == 0 else True
             return return_value
-
+       
         if IntersectSquareBorder(image_multChannel) == False:
             bins = sinogram_multChannel.shape[2]
             bins_shifted = np.random.randint(0, bins)
