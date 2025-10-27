@@ -1,3 +1,5 @@
+from torch import nn
+
 ## Supervisory
 '''
 In this module, set the correct hyperparameter dictionary for config_SUP_SI.

@@ -1,3 +1,4 @@
+from torch import nn
 
 config_GAN_SI = { # Older, this still outperforms the more recent tuning
     'SI_disc_adv_criterion': nn.MSELoss(),

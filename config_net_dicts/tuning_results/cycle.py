@@ -1,3 +1,5 @@
+from torch import nn
+
 config_CYCLEGAN={ # Works, yeah! ("4a92")
     "IS_disc_adv_criterion": nn.BCEWithLogitsLoss(),
     "IS_disc_b1": 0.3335905891003811,
