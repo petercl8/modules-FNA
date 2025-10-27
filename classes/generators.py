@@ -2,7 +2,7 @@ from torch import nn
 import torch
 
 
-def small_test(x)
+def small_test(x):
     print(x+2)
 
 ######################################
