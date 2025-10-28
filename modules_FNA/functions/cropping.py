@@ -1,3 +1,8 @@
+__all__=['crop_single_image_by_size',
+         'crop_single_image_by_factor',
+         'crop_image_tensor_by_factor',
+         'crop_image_tensor_with_corner']     
+
 def crop_single_image_by_size(image, crop_size=-1):
     '''
     Function to crop a single image to a square shape, with even margins around the edges.
