@@ -4,7 +4,7 @@
 :: ==============================
 
 :: 1) Set global Git identity
-git config --global user.name "Peter Lindstrom"
+git config --global user.name "Your Name"
 git config --global user.email "your.email@example.com"
 
 :: 2) Generate SSH key if it doesn't exist
