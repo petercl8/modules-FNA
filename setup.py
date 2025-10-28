@@ -1,13 +1,10 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="modules_FNA",        # The installable package name
+    name="modules_FNA",
     version="0.1",
-    packages=find_packages(),   # Automatically finds all packages under modules_FNA/
-    install_requires=[          # Optional: list dependencies
-        # "numpy",
-        # "torch",
-        # "ray[tune]"
+    packages=find_packages(include=["modules_FNA", "modules_FNA.*"]),
+    install_requires=[
+        # Add external dependencies here, e.g. "numpy", "torch"
     ],
-    python_requires=">=3.10",
 )
