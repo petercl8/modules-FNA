@@ -1,4 +1,4 @@
 _all__=['test']
 
-def test(x):
+def test2(x):
     return x * 2
