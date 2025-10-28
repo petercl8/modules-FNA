@@ -6,5 +6,5 @@ from .functions import *
 
 # Optional: define __all__ for top-level import *
 __all__ = []
-for module in [functions, classes, trainables]:
+for module in [functions]:
     __all__.extend(getattr(module, "__all__", []))

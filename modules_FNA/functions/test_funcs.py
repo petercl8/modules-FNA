@@ -1,4 +1,5 @@
-_all__=['test2']
+
+__all__=['test2']
 
 def test2(x):
     return x * 2
