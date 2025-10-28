@@ -1,5 +1,5 @@
 
 __all__=['test2']
 
-def test2(x):
+def test3(x):
     return x * 2
