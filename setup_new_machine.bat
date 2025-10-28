@@ -3,9 +3,15 @@
 :: One-Time Machine Setup (SSH + Git)
 :: ==============================
 
+:: Prompt for GitHub username
+set /p GITHUB_USER="Enter your GitHub username: "
+
+:: Prompt for GitHub email
+set /p GITHUB_EMAIL="Enter your GitHub email: "
+
 :: 1) Set global Git identity
-git config --global user.name "Your Name"
-git config --global user.email "your.email@example.com"
+git config --global user.name "%GITHUB_USER%"
+git config --global user.email "%GITHUB_EMAIL%"
 
 :: 2) Generate SSH key if it doesn't exist
 if not exist "%USERPROFILE%\.ssh\id_ed25519" (
