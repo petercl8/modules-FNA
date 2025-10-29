@@ -4,7 +4,7 @@ from torch.utils.data import Dataset
 from torchvision import transforms
 import numpy as np
 
-def NpArrayDataLoader(image_array, sino_array, config, image_size = 90, sino_size=90, image_channels=1, sino_channels=1, augment=False, index=0):
+def NpArrayDataLoader(image_array, sino_array, config, image_size = 90, sino_size=90, image_channels=1, sino_channels=1, augment=False, index=0, train_type='SUP', train_SI=True, device='cuda'):
     '''
     Function to load an image and a sinogram. Returns 4 pytorch tensors: the original dataset sinogram and image,
     and scaled and (optionally) normalized sinograms and images.
