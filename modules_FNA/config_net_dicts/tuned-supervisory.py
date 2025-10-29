@@ -57,7 +57,7 @@ config_SUP_SI={
   "sup_criterion": nn.L1Loss()
 }
 '''
-'''
+
 # 1x90x90, Tuned for SSIM - 14d #
 config_SUP_SI = {
   "SI_dropout": False,
@@ -78,7 +78,7 @@ config_SUP_SI = {
   "gen_lr": 0.0005481469822215635,
   "sup_criterion": nn.MSELoss()
 }
-'''
+
 '''
 # 1x90x90, Tuned for Local Distributions Metric, 5x5 window, stride 2
 config_SUP_SI={
@@ -126,7 +126,7 @@ config_SUP_SI={
 
 
 ### Below networks were tuned on 1/4 of dataset (high MSE or low MSE) ####
-
+'''
 # 1x90x90, Tuned for SSIM, highSSIM quartile, - c867539
 config_SUP_SI = {
   "SI_dropout": False,
@@ -147,7 +147,7 @@ config_SUP_SI = {
   "gen_lr": 0.0003914885622973457,
   "sup_criterion": nn.MSELoss()
 }
-
+'''
 '''
 # 1x90x90, Tuned for MSE, lowMSE quartile - d3c
 config_SUP_SI = {
