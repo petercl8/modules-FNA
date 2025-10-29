@@ -1,7 +1,7 @@
 import numpy as np
 from skimage.transform import iradon, radon # For reconstruction and projection
 from torchvision import transforms  # For resizing tensors
-from functions.cropping import crop_single_image_by_factor
+from .cropping import crop_single_image_by_factor
 import torch.nn as nn
 import torch         
 
