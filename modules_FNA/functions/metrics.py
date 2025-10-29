@@ -5,7 +5,6 @@ from skimage import metrics
 from skimage.metrics import structural_similarity
 from .functions.reconstruction import reconstruct
 from .functions.image_processing import crop_image_tensor_by_factor, crop_image_tensor_with_corner
-from modules_FNA.config import compute_MLEM, tune_dataframe_path
 
 
 ##################################################
@@ -52,7 +51,7 @@ def calculate_metric(batch_A, batch_B, img_metric_function, return_dataframe=Fal
         return metric_frame, metric_avg
 
 
-def update_tune_dataframe(tune_dataframe, model, config, mean_CNN_MSE, mean_CNN_SSIM, mean_CNN_CUSTOM):
+def update_tune_dataframe(tune_dataframe, tune_dataframe_path, model, config, mean_CNN_MSE, mean_CNN_SSIM, mean_CNN_CUSTOM):
     '''
     Function to update the tune_dataframe for each trial run that makes it partway through the tuning process.
 
@@ -92,7 +91,7 @@ def update_tune_dataframe(tune_dataframe, model, config, mean_CNN_MSE, mean_CNN_
     return tune_dataframe
 
 
-def reconstruct_images_and_update_test_dataframe(sino_tensor, image_size, CNN_output, ground_image, test_dataframe, config):
+def reconstruct_images_and_update_test_dataframe(sino_tensor, image_size, CNN_output, ground_image, test_dataframe, config, compute_MLEM=False):
     '''
     Function which: A) performs reconstructions (FBP and possibly ML-EM)
                     B) constructs a dataframe of metric values (MSE & SSIM) for these reconstructions, and also for the CNN output, with respect to the ground truth image.
