@@ -185,7 +185,7 @@ class NpArrayDataSet(Dataset):
         self.sample_division = sample_division
 
     def __len__(self):
-        length = int(len(self.image_array)/sample_division)
+        length = int(len(self.image_array)/self.sample_division)
         return length
 
     def __getitem__(self, idx):
