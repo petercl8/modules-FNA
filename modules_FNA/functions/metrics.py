@@ -25,6 +25,8 @@ def calculate_metric(batch_A, batch_B, img_metric_function, return_dataframe=Fal
     label:                  what to call dataframe, if it is created
     crop_factor:            factor by which to crop both batches of images. 1 = whole image is retained.
     '''
+    
+    import pandas as pd
 
     if crop_factor != 1:
         A = crop_image_tensor_by_factor(batch_A, crop_factor=crop_factor)
