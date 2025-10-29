@@ -1,4 +1,5 @@
 import torch
+from torch import nn
 
 def weights_init(m): # 'm' represents layers in the generator or discriminator.
 
