@@ -45,11 +45,10 @@ def calculate_metric(batch_A, batch_B, img_metric_function, return_dataframe=Fal
         if return_dataframe==True:
             metric_list.append(metric_value)
 
-    metric_frame = pd.DataFrame({label : metric_list})
-
     if return_dataframe==False:
         return metric_avg
     else:
+        metric_frame = pd.DataFrame({label : metric_list})
         return metric_frame, metric_avg
 
 
