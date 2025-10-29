@@ -3,8 +3,8 @@ import numpy as np
 import pandas as pd
 from skimage import metrics
 from skimage.metrics import structural_similarity
-from .functions.reconstruction import reconstruct
-from .functions.image_processing import crop_image_tensor_by_factor, crop_image_tensor_with_corner
+from .reconstruction_projection import reconstruct
+from .cropping import crop_image_tensor_by_factor, crop_image_tensor_with_corner
 
 
 ##################################################
