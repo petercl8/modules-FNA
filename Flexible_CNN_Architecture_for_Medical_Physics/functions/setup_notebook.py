@@ -189,7 +189,7 @@ def construct_config(
     config_RAY_GAN=None,
     config_SUP_RAY_cycle=None,
     config_GAN_RAY_cycle=None):
-    
+
     """
     Combines configuration dictionaries based on run_mode, train_type, and train_SI.
     Returns the appropriate config dictionary.
@@ -228,3 +228,37 @@ def construct_config(
         raise ValueError(f"Unknown run_mode '{run_mode}'.")
 
     return config
+
+def test_gpu_resources():
+    """
+    Tests GPU visibility and Ray GPU resource setup.
+    Prints CUDA and Ray GPU information and runs a simple GPU test task.
+    """
+
+    import os
+    import torch
+    import ray
+
+    # Make sure Ray sees the GPU
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+
+    print("\n=== Torch GPU Info ===")
+    print("Torch CUDA available:", torch.cuda.is_available())
+    print("Torch CUDA device count:", torch.cuda.device_count())
+
+    # Restart Ray safely
+    ray.shutdown()
+    ray.init(ignore_reinit_error=True, include_dashboard=False)
+
+    print("\n=== Ray Resource Info ===")
+    print(ray.available_resources())
+
+    # Test GPU access from within a Ray task
+    @ray.remote(num_gpus=1)
+    def gpu_test():
+        import torch
+        return torch.cuda.current_device(), torch.cuda.get_device_name(0)
+
+    gpu_id, gpu_name = ray.get(gpu_test.remote())
+    print("\n=== GPU Test Task Result ===")
+    print(f"GPU ID: {gpu_id}, GPU Name: {gpu_name}")
