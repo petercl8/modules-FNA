@@ -41,7 +41,7 @@ def setup_project_dirs(IN_COLAB, project_local_dirPath, project_colab_dirPath=No
     # Device
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-    return device, project_dirPath
+    return project_dirPath
 
 def setup_run_paths(
     project_dirPath,
@@ -84,10 +84,6 @@ def setup_run_paths(
     
     # Base directories
     paths = {}
-
-    print(project_dirPath) # Here
-    print(checkpoint_dirName)
-
     paths['plot_dirPath'] = os.path.join(project_dirPath, plot_dirName)    
     paths['checkpoint_dirPath'] = os.path.join(project_dirPath, checkpoint_dirName)
     paths['tune_storage_dirPath'] = os.path.join(project_dirPath, tune_storage_dirName)
