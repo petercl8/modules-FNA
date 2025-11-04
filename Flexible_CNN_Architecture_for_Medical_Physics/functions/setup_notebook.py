@@ -85,6 +85,10 @@ def setup_run_paths(
     # Base directories
     paths = {}
     paths['plot_dirPath'] = os.path.join(project_dirPath, plot_dirName)
+
+    print(project_dirPath) # Here
+    print(checkpoint_dirName)
+    
     paths['checkpoint_dirPath'] = os.path.join(project_dirPath, checkpoint_dirName)
     paths['tune_storage_dirPath'] = os.path.join(project_dirPath, tune_storage_dirName)
     paths['tune_dataframe_dirPath'] = os.path.join(project_dirPath, tune_dataframe_dirName)
