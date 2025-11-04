@@ -1,0 +1,110 @@
+ANALYSIS OF NON-LOCAL VARIABLE REFERENCES
+==========================================
+
+This file lists functions and classes that reference variables that are not:
+- Function/class parameters
+- Local variables
+- Imported modules
+- Class attributes (for methods)
+
+These variables were likely available in the global namespace of the Jupyter notebook
+but are not available in the Python package context.
+
+================================================================================
+FILE: classes/discriminators.py
+================================================================================
+
+CLASS: Disc_S_90
+METHOD: __init__
+ISSUE: References 'sino_channels' on lines 25 and 58
+      - 'sino_channels' is not a parameter (parameters are: config, disc_I, input_channels)
+      - 'sino_channels' is not defined locally in the method
+      - This variable was likely defined globally in the Jupyter notebook
+
+LOCATION: Line 25: nn.Conv2d(in_channels=sino_channels, ...)
+          Line 58: self.seq3 = nn.Conv2d(hidden_dim * 5, sino_channels, kernel_size=1)
+
+
+================================================================================
+FILE: functions/cropping.py
+================================================================================
+
+FUNCTION: crop_single_image_by_factor
+ISSUE: References 'image_tensor' on line 43
+      - Parameter is named 'image', not 'image_tensor'
+      - Returns 'image_tensor[y_min:y_max, x_min:x_max]' but should return 'image[...]'
+      - This appears to be a variable name mismatch from the notebook conversion
+
+LOCATION: Line 43: return image_tensor[y_min:y_max , x_min:x_max]
+          Should be: return image[y_min:y_max , x_min:x_max]
+
+
+================================================================================
+FILE: functions/reconstruction_projection.py
+================================================================================
+
+FUNCTION: reconstruct
+ISSUE: References 'device' on line 148
+      - 'device' is not a parameter (parameters are: sinogram_tensor, config, image_size, recon_type, circle)
+      - 'device' is not defined locally in the function
+      - This variable was likely defined globally in the Jupyter notebook (e.g., device = 'cuda')
+
+LOCATION: Line 148: return a.to(device)
+
+
+================================================================================
+FILE: functions/metrics.py
+================================================================================
+
+FUNCTION: reconstruct_images_and_update_test_dataframe
+ISSUE: References 'MSE' and 'SSIM' on lines 118-123
+      - 'MSE' and 'SSIM' are used as function objects but are not imported or passed as parameters
+      - These functions ARE defined later in the same file (MSE at line 164, SSIM at line 138)
+      - In Python, this works due to late binding, but in the notebook these may have been global functions
+      - Consider: Should these be passed as parameters, or imported from elsewhere?
+      - Note: The functions are defined in the same module, so this may work at runtime, but it's
+        good practice to make dependencies explicit
+
+LOCATION: Line 118: calculate_metric(ground_image, CNN_output, MSE, ...)
+          Line 119: calculate_metric(ground_image, CNN_output, SSIM, ...)
+          Line 120: calculate_metric(ground_image, FBP_output, MSE, ...)
+          Line 121: calculate_metric(ground_image, FBP_output, SSIM, ...)
+          Line 122: calculate_metric(ground_image, MLEM_output, MSE, ...)
+          Line 123: calculate_metric(ground_image, MLEM_output, SSIM, ...)
+
+
+================================================================================
+SUMMARY
+================================================================================
+
+Total issues found: 4
+
+1. Disc_S_90.__init__ - Missing 'sino_channels' variable
+2. crop_single_image_by_factor - Variable name mismatch ('image_tensor' vs 'image')
+3. reconstruct - Missing 'device' variable
+4. reconstruct_images_and_update_test_dataframe - Uses 'MSE' and 'SSIM' functions (may work but dependencies not explicit)
+
+================================================================================
+RECOMMENDED FIXES (for reference, not implemented)
+================================================================================
+
+1. Disc_S_90.__init__:
+   - Add 'sino_channels' as a parameter, OR
+   - Get it from config dictionary, OR
+   - Add it as an instance variable from a different source
+
+2. crop_single_image_by_factor:
+   - Change 'image_tensor' to 'image' on line 43
+
+3. reconstruct:
+   - Add 'device' as a parameter, OR
+   - Get it from config dictionary, OR
+   - Use torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+4. reconstruct_images_and_update_test_dataframe:
+   - If MSE and SSIM are meant to be from the same module, this is fine (Python late binding)
+   - If they were global in notebook, consider importing them explicitly or passing as parameters
+   - Recommendation: Keep as-is if they're defined in the same file, but document the dependency
+
+================================================================================
+

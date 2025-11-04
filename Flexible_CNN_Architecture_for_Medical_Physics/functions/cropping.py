@@ -40,7 +40,7 @@ def crop_single_image_by_factor(image, crop_factor=1):
     y_min = 0 + y_margin
     y_max = y_size - y_margin
 
-    return image_tensor[y_min:y_max , x_min:x_max]
+    return image[y_min:y_max , x_min:x_max]
 
 
 def crop_image_tensor_with_corner(batch, crop_size, corner=(0,0)):

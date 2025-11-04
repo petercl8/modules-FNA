@@ -145,7 +145,9 @@ def reconstruct(sinogram_tensor, config, image_size=90, recon_type='FBP', circle
         a = torch.reshape(a,(batch_size, 1 , image_size, image_size)) # Reshapes images back into square matrices
         a = scale*a
 
-    return a.to(device)
+    # Return the reconstructed images as a tensor on the same device as the sinogram_tensor
+    return a.to(sinogram_tensor.device)
+
 
 def project(image_tensor, circle=False, theta=-1):
     '''

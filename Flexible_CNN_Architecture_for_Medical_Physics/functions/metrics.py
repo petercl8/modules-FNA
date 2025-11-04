@@ -52,6 +52,46 @@ def calculate_metric(batch_A, batch_B, img_metric_function, return_dataframe=Fal
         return metric_frame, metric_avg
 
 
+def reconstruct_images_and_update_test_dataframe(sino_tensor, image_size, CNN_output, ground_image, test_dataframe, config,compute_MLEM=False):
+    '''
+    Function which: A) performs reconstructions (FBP and possibly ML-EM)
+                    B) constructs a dataframe of metric values (MSE & SSIM) for these reconstructions, and also for the CNN output, with respect to the ground truth image.
+                    C) concatenates this with the test dataframe passed to this function
+                    D) returns the concatenated dataframe, mean metric values, and reconstructions
+
+    sino_tensor:    sinogram tensor of shape [num, chan, height, width]
+    image_size:     image_size
+    CNN_output:     CNN reconstructions
+    ground_image:   ground truth images
+    test_dataframe: dataframe to append metric values to
+    config:         general config dictionary
+
+    Note: MSE and SSIM are calculated using the metrics.py file, which are definted below in this module.
+    '''
+
+    # Construct Outputs #
+    FBP_output = reconstruct(sino_tensor, config, image_size=image_size, recon_type='FBP')
+    if compute_MLEM==True:
+        MLEM_output = reconstruct(sino_tensor, config, image_size=image_size, recon_type='MLEM')
+    else: # If not looking at ML-EM, don't waste time computing the MLEM images, which can take awhile.
+        MLEM_output = FBP_output
+
+    # Dataframes: build dataframes for every reconstruction technique/metric combination #
+    batch_CNN_MSE,  mean_CNN_MSE   = calculate_metric(ground_image, CNN_output, MSE,  return_dataframe=True, label='MSE (Network)')
+    batch_CNN_SSIM,  mean_CNN_SSIM = calculate_metric(ground_image, CNN_output, SSIM, return_dataframe=True, label='SSIM (Network)')
+    batch_FBP_MSE,  mean_FBP_MSE   = calculate_metric(ground_image, FBP_output, MSE,  return_dataframe=True, label='MSE (FBP)')
+    batch_FBP_SSIM,  mean_FBP_SSIM = calculate_metric(ground_image, FBP_output, SSIM, return_dataframe=True, label='SSIM (FBP)')
+    batch_MLEM_MSE, mean_MLEM_MSE  = calculate_metric(ground_image, MLEM_output, MSE, return_dataframe=True, label='MSE (ML-EM)')
+    batch_MLEM_SSIM, mean_MLEM_SSIM= calculate_metric(ground_image, MLEM_output, SSIM,return_dataframe=True, label='SSIM (ML-EM)')
+
+    # Concatenate batch dataframes and larger running test dataframe
+    add_frame = pd.concat([batch_CNN_MSE, batch_FBP_MSE, batch_MLEM_MSE, batch_CNN_SSIM, batch_FBP_SSIM, batch_MLEM_SSIM], axis=1)
+    test_dataframe = pd.concat([test_dataframe, add_frame], axis=0)
+
+    # Return a whole lot of stuff
+    return test_dataframe, mean_CNN_MSE, mean_CNN_SSIM, mean_FBP_MSE, mean_FBP_SSIM, mean_MLEM_MSE, mean_MLEM_SSIM, FBP_output, MLEM_output
+
+
 def update_tune_dataframe(tune_dataframe, tune_dataframe_path, model, config, mean_CNN_MSE, mean_CNN_SSIM, mean_CNN_CUSTOM):
     '''
     Function to update the tune_dataframe for each trial run that makes it partway through the tuning process.
@@ -91,43 +131,6 @@ def update_tune_dataframe(tune_dataframe, tune_dataframe_path, model, config, me
 
     return tune_dataframe
 
-
-def reconstruct_images_and_update_test_dataframe(sino_tensor, image_size, CNN_output, ground_image, test_dataframe, config, compute_MLEM=False):
-    '''
-    Function which: A) performs reconstructions (FBP and possibly ML-EM)
-                    B) constructs a dataframe of metric values (MSE & SSIM) for these reconstructions, and also for the CNN output, with respect to the ground truth image.
-                    C) concatenates this with the test dataframe passed to this function
-                    D) returns the concatenated dataframe, mean metric values, and reconstructions
-
-    sino_tensor:    sinogram tensor of shape [num, chan, height, width]
-    image_size:     image_size
-    CNN_output:     CNN reconstructions
-    ground_image:   ground truth images
-    test_dataframe: dataframe to append metric values to
-    config:         general config dictionary
-    '''
-
-    # Construct Outputs #
-    FBP_output = reconstruct(sino_tensor, config, image_size=image_size, recon_type='FBP')
-    if compute_MLEM==True:
-        MLEM_output = reconstruct(sino_tensor, config, image_size=image_size, recon_type='MLEM')
-    else: # If not looking at ML-EM, don't waste time computing the MLEM images, which can take awhile.
-        MLEM_output = FBP_output
-
-    # Dataframes: build dataframes for every reconstruction technique/metric combination #
-    batch_CNN_MSE,  mean_CNN_MSE   = calculate_metric(ground_image, CNN_output, MSE,  return_dataframe=True, label='MSE (Network)')
-    batch_CNN_SSIM,  mean_CNN_SSIM = calculate_metric(ground_image, CNN_output, SSIM, return_dataframe=True, label='SSIM (Network)')
-    batch_FBP_MSE,  mean_FBP_MSE   = calculate_metric(ground_image, FBP_output, MSE,  return_dataframe=True, label='MSE (FBP)')
-    batch_FBP_SSIM,  mean_FBP_SSIM = calculate_metric(ground_image, FBP_output, SSIM, return_dataframe=True, label='SSIM (FBP)')
-    batch_MLEM_MSE, mean_MLEM_MSE  = calculate_metric(ground_image, MLEM_output, MSE, return_dataframe=True, label='MSE (ML-EM)')
-    batch_MLEM_SSIM, mean_MLEM_SSIM= calculate_metric(ground_image, MLEM_output, SSIM,return_dataframe=True, label='SSIM (ML-EM)')
-
-    # Concatenate batch dataframes and larger running test dataframe
-    add_frame = pd.concat([batch_CNN_MSE, batch_FBP_MSE, batch_MLEM_MSE, batch_CNN_SSIM, batch_FBP_SSIM, batch_MLEM_SSIM], axis=1)
-    test_dataframe = pd.concat([test_dataframe, add_frame], axis=0)
-
-    # Return a whole lot of stuff
-    return test_dataframe, mean_CNN_MSE, mean_CNN_SSIM, mean_FBP_MSE, mean_FBP_SSIM, mean_MLEM_MSE, mean_MLEM_SSIM, FBP_output, MLEM_output
 
 ######################
 ## Metric Functions ##

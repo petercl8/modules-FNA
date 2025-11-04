@@ -22,7 +22,7 @@ class Disc_S_90(nn.Module):
             #               = [Hi+2*padding-kernel]/stride + 1 (for dialation=1)
 
             # Feature Map Block
-            nn.Conv2d(in_channels=sino_channels, out_channels=hidden_dim, kernel_size=7, padding=3, padding_mode='reflect'),
+            nn.Conv2d(in_channels=input_channels, out_channels=hidden_dim, kernel_size=7, padding=3, padding_mode='reflect'),
 
             # Contracting Block without normalization:
             # H1 = (90-4)/2+1 = 44
@@ -55,7 +55,7 @@ class Disc_S_90(nn.Module):
                     nn.BatchNorm2d(hidden_dim*5), nn.LeakyReLU(negative_slope=0.2),
             )
         ## 1x1 Convolution ##
-        self.seq3 = nn.Conv2d(hidden_dim * 5, sino_channels, kernel_size=1)
+        self.seq3 = nn.Conv2d(hidden_dim * 5, input_channels, kernel_size=1)
 
     def forward(self, image):
         a = self.seq1(image)

@@ -16,7 +16,7 @@ git commit -m "Initial commit"
 :: 4) Add SSH remote to GitHub
 :: - 'origin' is a persistent reference to the remote repository URL
 git remote remove origin 2>nul
-git remote add origin git@github.com:petercl8/modules_FNA.git
+git remote add origin git@github.com:petercl8/Flexible_CNN_Architecture_for_Medical_Physics.git
 
 :: 5) Rename the current branch to 'main'
 git branch -M main
