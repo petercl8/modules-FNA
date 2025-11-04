@@ -1,3 +1,3 @@
 
-def test3(x):
+def test(x):
     return x * 4
