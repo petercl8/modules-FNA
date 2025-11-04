@@ -229,36 +229,31 @@ def construct_config(
 
     return config
 
-def test_gpu_resources():
+def list_resources(check_ray_tune=False):
     """
-    Tests GPU visibility and Ray GPU resource setup.
-    Prints CUDA and Ray GPU information and runs a simple GPU test task.
+    Quickly lists available CPUs and GPUs.
+    Optionally checks Ray/Ray Tune resources if check_ray_tune=True.
     """
-
     import os
+    import multiprocessing
     import torch
-    import ray
 
-    # Make sure Ray sees the GPU
-    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+    # Basic system info
+    cpu_count = multiprocessing.cpu_count()
+    gpu_count = torch.cuda.device_count()
+    gpu_names = [torch.cuda.get_device_name(i) for i in range(gpu_count)] if gpu_count else []
 
-    print("\n=== Torch GPU Info ===")
-    print("Torch CUDA available:", torch.cuda.is_available())
-    print("Torch CUDA device count:", torch.cuda.device_count())
+    print(f"CPUs available: {cpu_count}")
+    print(f"GPUs available: {gpu_count}")
+    if gpu_count:
+        for i, name in enumerate(gpu_names):
+            print(f"  GPU {i}: {name}")
 
-    # Restart Ray safely
-    ray.shutdown()
-    ray.init(ignore_reinit_error=True, include_dashboard=False)
+    # Optional Ray/Ray Tune resource check
+    if check_ray_tune:
+        import ray
+        ray.shutdown()
+        ray.init(ignore_reinit_error=True, include_dashboard=False)
+        print("\nRay resources:")
+        print(ray.available_resources())
 
-    print("\n=== Ray Resource Info ===")
-    print(ray.available_resources())
-
-    # Test GPU access from within a Ray task
-    @ray.remote(num_gpus=1)
-    def gpu_test():
-        import torch
-        return torch.cuda.current_device(), torch.cuda.get_device_name(0)
-
-    gpu_id, gpu_name = ray.get(gpu_test.remote())
-    print("\n=== GPU Test Task Result ===")
-    print(f"GPU ID: {gpu_id}, GPU Name: {gpu_name}")
