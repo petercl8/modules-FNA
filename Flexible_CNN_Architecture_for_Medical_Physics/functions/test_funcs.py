@@ -1,3 +1,3 @@
 
 def test(x):
-    return x * 5
+    return x * 10
