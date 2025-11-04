@@ -173,4 +173,58 @@ def setup_run_paths(
 
     return paths, settings
 
+def construct_config(
+    run_mode,
+    train_type,
+    train_SI,
+    config_SUP_SI=None,
+    config_SUP_IS=None,
+    config_GAN_SI=None,
+    config_GAN_IS=None,
+    config_CYCLEGAN=None,
+    config_CYCLESUP=None,
+    config_RAY_SI=None,
+    config_RAY_IS=None,
+    config_RAY_SUP=None,
+    config_RAY_GAN=None,
+    config_SUP_RAY_cycle=None,
+    config_GAN_RAY_cycle=None):
+    
+    """
+    Combines configuration dictionaries based on run_mode, train_type, and train_SI.
+    Returns the appropriate config dictionary.
+    """
 
+    # Normalize strings (avoid accidental None or case mismatch)
+    run_mode = str(run_mode).lower()
+    train_type = str(train_type).upper()
+
+    # Train, test, or visualize modes
+    if run_mode in ['train', 'test', 'visualize']:
+        if train_type == 'SUP':
+            config = config_SUP_SI if train_SI else config_SUP_IS
+        elif train_type == 'GAN':
+            config = config_GAN_SI if train_SI else config_GAN_IS
+        elif train_type == 'CYCLEGAN':
+            config = config_CYCLEGAN
+        elif train_type == 'CYCLESUP':
+            config = config_CYCLESUP
+        else:
+            raise ValueError(f"Unknown train_type '{train_type}' for run_mode '{run_mode}'.")
+
+    # Tune mode
+    elif run_mode == 'tune':
+        if train_type == 'SUP':
+            config = {**(config_RAY_SI if train_SI else config_RAY_IS), **config_RAY_SUP}
+        elif train_type == 'GAN':
+            config = {**(config_RAY_SI if train_SI else config_RAY_IS), **config_RAY_GAN}
+        elif train_type == 'CYCLESUP':
+            config = {**config_SUP_SI, **config_SUP_IS, **config_SUP_RAY_cycle}
+        elif train_type == 'CYCLEGAN':
+            config = {**config_GAN_SI, **config_GAN_IS, **config_GAN_RAY_cycle}
+        else:
+            raise ValueError(f"Unknown train_type '{train_type}' for run_mode '{run_mode}'.")
+    else:
+        raise ValueError(f"Unknown run_mode '{run_mode}'.")
+
+    return config
