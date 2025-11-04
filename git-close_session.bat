@@ -1,6 +1,6 @@
 @echo off
 :: ==============================
-:: Close Session: Commit & Push All Changes
+:: Close Session: Commit & Push All Changes to Repository
 :: ==============================
 
 :: Ask if user wants to push remaining changes
