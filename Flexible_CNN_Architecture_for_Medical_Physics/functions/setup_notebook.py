@@ -2,6 +2,47 @@ import os
 import torch
 import sys
 
+def setup_project_dirs(IN_COLAB, project_local_dirPath, project_colab_dirPath=None, mount_colab_drive=True):
+    """
+    Sets up project directories and adds the project path to sys.path.
+
+    Parameters
+    ----------
+    project_local_dirPath : str
+        Path to the project on the local machine.
+    project_colab_dirPath : str, optional
+        Path to the project on Google Drive (used only in Colab).
+    mount_colab_drive : bool, default True
+        Whether to mount Google Drive if running in Colab.
+
+    Returns
+    -------
+    str
+        The path being used for the project (Colab or local).
+    """
+
+    # --- Determine project directory ---
+    if IN_COLAB and project_colab_dirPath is not None:
+        if mount_colab_drive:
+            from google.colab import drive
+            drive.mount('/content/drive')
+        project_dirPath = project_colab_dirPath
+    else:
+        project_dirPath = project_local_dirPath
+
+    # --- Add project directory to sys.path if not already present ---
+    if project_dirPath not in sys.path:
+        sys.path.insert(0, project_dirPath)
+
+    # --- Optional debugging: show current sys.path ---
+    # for p in sys.path:
+    #     print("   ", p)
+
+    # Device
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+    return device, project_dirPath
+
 def setup_run_paths(
     project_dirPath,
     plot_dirName,
@@ -130,46 +171,6 @@ def setup_run_paths(
     paths['test_dataframe_path'] = os.path.join(paths['test_dataframe_dirPath'], f"{test_csv_file}.csv")
     paths['checkpoint_path'] = os.path.join(paths['checkpoint_dirPath'], settings['checkpoint_file'])
 
-    return {'paths': paths, 'settings': settings}
+    return paths, settings
 
 
-def setup_project_dirs(IN_COLAB, project_local_dirPath, project_colab_dirPath=None, mount_colab_drive=True):
-    """
-    Sets up project directories and adds the project path to sys.path.
-
-    Parameters
-    ----------
-    project_local_dirPath : str
-        Path to the project on the local machine.
-    project_colab_dirPath : str, optional
-        Path to the project on Google Drive (used only in Colab).
-    mount_colab_drive : bool, default True
-        Whether to mount Google Drive if running in Colab.
-
-    Returns
-    -------
-    str
-        The path being used for the project (Colab or local).
-    """
-
-    # --- Determine project directory ---
-    if IN_COLAB and project_colab_dirPath is not None:
-        if mount_colab_drive:
-            from google.colab import drive
-            drive.mount('/content/drive')
-        project_dirPath = project_colab_dirPath
-    else:
-        project_dirPath = project_local_dirPath
-
-    # --- Add project directory to sys.path if not already present ---
-    if project_dirPath not in sys.path:
-        sys.path.insert(0, project_dirPath)
-
-    # --- Optional debugging: show current sys.path ---
-    # for p in sys.path:
-    #     print("   ", p)
-
-    # Device
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
-
-    return device, project_dirPath
