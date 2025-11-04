@@ -39,3 +39,4 @@ REM --- Step 4: Ask for commit hash to rollback to ---
 set /p TARGET_HASH=Enter the commit hash to rollback to: 
 
 REM --- Step 5: Reset local
+eline -
