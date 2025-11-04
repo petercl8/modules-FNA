@@ -229,7 +229,7 @@ def construct_config(
 
     return config
 
-def list_resources(check_ray_tune=False):
+def list_compute_resources(check_ray_tune=False):
     """
     Quickly lists available CPUs and GPUs.
     Optionally checks Ray/Ray Tune resources if check_ray_tune=True.
