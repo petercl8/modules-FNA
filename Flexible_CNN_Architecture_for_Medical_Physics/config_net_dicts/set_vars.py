@@ -39,9 +39,7 @@ def setup_run_paths(
     Sets up paths, filenames, and run-specific settings for a project.
     Returns a dictionary with all relevant paths and configuration values.
     """
-    # Device
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
-
+    
     # Base directories
     paths = {}
     paths['plot_dirPath'] = os.path.join(project_dirPath, plot_dirName)
