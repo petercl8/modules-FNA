@@ -2,6 +2,92 @@ import os
 import torch
 import sys
 
+
+def construct_config(
+    run_mode,
+    train_type,
+    train_SI,
+    config_SUP_SI=None,
+    config_SUP_IS=None,
+    config_GAN_SI=None,
+    config_GAN_IS=None,
+    config_CYCLEGAN=None,
+    config_CYCLESUP=None,
+    config_RAY_SI=None,
+    config_RAY_IS=None,
+    config_RAY_SUP=None,
+    config_RAY_GAN=None,
+    config_SUP_RAY_cycle=None,
+    config_GAN_RAY_cycle=None):
+
+    """
+    Combines configuration dictionaries based on run_mode, train_type, and train_SI.
+    Returns the appropriate config dictionary.
+    """
+
+    # Normalize strings (avoid accidental None or case mismatch)
+    run_mode = str(run_mode).lower()
+    train_type = str(train_type).upper()
+
+    # Train, test, or visualize modes
+    if run_mode in ['train', 'test', 'visualize']:
+        if train_type == 'SUP':
+            config = config_SUP_SI if train_SI else config_SUP_IS
+        elif train_type == 'GAN':
+            config = config_GAN_SI if train_SI else config_GAN_IS
+        elif train_type == 'CYCLEGAN':
+            config = config_CYCLEGAN
+        elif train_type == 'CYCLESUP':
+            config = config_CYCLESUP
+        else:
+            raise ValueError(f"Unknown train_type '{train_type}' for run_mode '{run_mode}'.")
+
+    # Tune mode
+    elif run_mode == 'tune':
+        if train_type == 'SUP':
+            config = {**(config_RAY_SI if train_SI else config_RAY_IS), **config_RAY_SUP}
+        elif train_type == 'GAN':
+            config = {**(config_RAY_SI if train_SI else config_RAY_IS), **config_RAY_GAN}
+        elif train_type == 'CYCLESUP':
+            config = {**config_SUP_SI, **config_SUP_IS, **config_SUP_RAY_cycle}
+        elif train_type == 'CYCLEGAN':
+            config = {**config_GAN_SI, **config_GAN_IS, **config_GAN_RAY_cycle}
+        else:
+            raise ValueError(f"Unknown train_type '{train_type}' for run_mode '{run_mode}'.")
+    else:
+        raise ValueError(f"Unknown run_mode '{run_mode}'.")
+
+    return config
+
+def list_compute_resources(check_ray_tune=False):
+    """
+    Quickly lists available CPUs and GPUs.
+    Optionally checks Ray/Ray Tune resources if check_ray_tune=True.
+    """
+    import os
+    import multiprocessing
+    import torch
+
+    # Basic system info
+    cpu_count = multiprocessing.cpu_count()
+    gpu_count = torch.cuda.device_count()
+    gpu_names = [torch.cuda.get_device_name(i) for i in range(gpu_count)] if gpu_count else []
+
+    print(f"CPUs available: {cpu_count}")
+    print(f"GPUs available: {gpu_count}")
+    if gpu_count:
+        for i, name in enumerate(gpu_names):
+            print(f"  GPU {i}: {name}")
+
+    # Optional Ray/Ray Tune resource check
+    if check_ray_tune:
+        import ray
+        ray.shutdown()
+        ray.init(ignore_reinit_error=True, include_dashboard=False)
+        print("\nRay resources:")
+        print(ray.available_resources())
+
+
 def setup_project_dirs(IN_COLAB, project_local_dirPath, project_colab_dirPath=None, mount_colab_drive=True):
     """
     Sets up project directories and adds the project path to sys.path.
@@ -37,9 +123,6 @@ def setup_project_dirs(IN_COLAB, project_local_dirPath, project_colab_dirPath=No
     # --- Optional debugging: show current sys.path ---
     # for p in sys.path:
     #     print("   ", p)
-
-    # Device
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     return project_dirPath
 
@@ -172,88 +255,4 @@ def setup_run_paths(
     paths['checkpoint_path'] = os.path.join(paths['checkpoint_dirPath'], settings['checkpoint_file'])
 
     return paths, settings
-
-def construct_config(
-    run_mode,
-    train_type,
-    train_SI,
-    config_SUP_SI=None,
-    config_SUP_IS=None,
-    config_GAN_SI=None,
-    config_GAN_IS=None,
-    config_CYCLEGAN=None,
-    config_CYCLESUP=None,
-    config_RAY_SI=None,
-    config_RAY_IS=None,
-    config_RAY_SUP=None,
-    config_RAY_GAN=None,
-    config_SUP_RAY_cycle=None,
-    config_GAN_RAY_cycle=None):
-
-    """
-    Combines configuration dictionaries based on run_mode, train_type, and train_SI.
-    Returns the appropriate config dictionary.
-    """
-
-    # Normalize strings (avoid accidental None or case mismatch)
-    run_mode = str(run_mode).lower()
-    train_type = str(train_type).upper()
-
-    # Train, test, or visualize modes
-    if run_mode in ['train', 'test', 'visualize']:
-        if train_type == 'SUP':
-            config = config_SUP_SI if train_SI else config_SUP_IS
-        elif train_type == 'GAN':
-            config = config_GAN_SI if train_SI else config_GAN_IS
-        elif train_type == 'CYCLEGAN':
-            config = config_CYCLEGAN
-        elif train_type == 'CYCLESUP':
-            config = config_CYCLESUP
-        else:
-            raise ValueError(f"Unknown train_type '{train_type}' for run_mode '{run_mode}'.")
-
-    # Tune mode
-    elif run_mode == 'tune':
-        if train_type == 'SUP':
-            config = {**(config_RAY_SI if train_SI else config_RAY_IS), **config_RAY_SUP}
-        elif train_type == 'GAN':
-            config = {**(config_RAY_SI if train_SI else config_RAY_IS), **config_RAY_GAN}
-        elif train_type == 'CYCLESUP':
-            config = {**config_SUP_SI, **config_SUP_IS, **config_SUP_RAY_cycle}
-        elif train_type == 'CYCLEGAN':
-            config = {**config_GAN_SI, **config_GAN_IS, **config_GAN_RAY_cycle}
-        else:
-            raise ValueError(f"Unknown train_type '{train_type}' for run_mode '{run_mode}'.")
-    else:
-        raise ValueError(f"Unknown run_mode '{run_mode}'.")
-
-    return config
-
-def list_compute_resources(check_ray_tune=False):
-    """
-    Quickly lists available CPUs and GPUs.
-    Optionally checks Ray/Ray Tune resources if check_ray_tune=True.
-    """
-    import os
-    import multiprocessing
-    import torch
-
-    # Basic system info
-    cpu_count = multiprocessing.cpu_count()
-    gpu_count = torch.cuda.device_count()
-    gpu_names = [torch.cuda.get_device_name(i) for i in range(gpu_count)] if gpu_count else []
-
-    print(f"CPUs available: {cpu_count}")
-    print(f"GPUs available: {gpu_count}")
-    if gpu_count:
-        for i, name in enumerate(gpu_names):
-            print(f"  GPU {i}: {name}")
-
-    # Optional Ray/Ray Tune resource check
-    if check_ray_tune:
-        import ray
-        ray.shutdown()
-        ray.init(ignore_reinit_error=True, include_dashboard=False)
-        print("\nRay resources:")
-        print(ray.available_resources())
 
