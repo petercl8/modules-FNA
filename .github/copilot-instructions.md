@@ -1,5 +1,8 @@
 # Project general coding guidelines
 
+## Code Scope
+- Codebase-wide edits should be limited to files and folders within ./FlexCNN_Medical_Physics/FlexCNN_for_Medical_Physics/
+
 ## Code Style
 - Avoid matlotlib unless necessary for specific customizations. Prefer Pandas built-in plotting functions for simplicity.
 - Prefer modern Python (3.6+) features like f-strings and type hints
