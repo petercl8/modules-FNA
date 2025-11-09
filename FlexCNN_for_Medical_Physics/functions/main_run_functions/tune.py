@@ -1,4 +1,4 @@
-def Tune(tune_max_t=40, trainable='SUP', grace_period=1):
+def tune(tune_max_t=40, trainable='SUP', grace_period=1):
     '''
     This function is called to tune the "trainable" function, given:
 
