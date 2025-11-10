@@ -1,5 +1,10 @@
 # Project general coding guidelines
 
+## Code Structure
+Python package (FlexCNN_for_Medical_Physics) is installed and used from within a single jupyter notebook.
+This notebook is located here: ./FlexCNN_Medical_Physics/jupyter_notebooks/stitching_notebook.ipynb
+Use this notebook to understand how different modules and functions interact.
+
 ## Code Scope
 - Codebase-wide edits should be limited to files and folders within ./FlexCNN_Medical_Physics/FlexCNN_for_Medical_Physics/
 
