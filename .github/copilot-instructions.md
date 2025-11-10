@@ -2,7 +2,6 @@
 
 ## Code Scope
 - Codebase-wide edits should be limited to files and folders within ./FlexCNN_Medical_Physics/FlexCNN_for_Medical_Physics/
-- Avoid making changes to files within ./FlexCNN_Medical_Physics/context_only/
 
 ## Code Structure
 Python package (FlexCNN_for_Medical_Physics) is installed and used from within a single jupyter notebook.
@@ -27,3 +26,6 @@ This notebook is located here: ./FlexCNN_Medical_Physics/context_only/stitching_
 - Avoid code duplication by creating reusable functions or components
 - For complex numpy indexing, use intermediate variables with descriptive names
 - Add simple error handling for user inputs and API calls
+
+## Jupyter Notebook
+- Whenever possible, adjust styling to match what is already present in the notebook
