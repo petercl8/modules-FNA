@@ -1,6 +1,7 @@
-def train_Supervisory_Sym(config, offset=0, num_examples=-1, sample_division=1):
+def train_test_visualize_SUP(config, offset=0, num_examples=-1, sample_division=1):
     '''
-    Function to train or test a network with supervisory loss only. Also used for visualizing data in the dataset.
+    Function to train or test a network with supervisory loss only.
+    Also used for visualizing data in a dataset.
     '''
     print('Dataset offset:', offset)
     print('Dataset num_examples:', num_examples)
