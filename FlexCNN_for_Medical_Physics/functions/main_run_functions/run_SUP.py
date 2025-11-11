@@ -11,10 +11,10 @@ from functions.helper.metrics import calculate_metric, SSIM, MSE, custom_metric,
 from functions.helper.reconstruction_projection import reconstruct
 from functions.helper.display_images import show_single_unmatched_tensor, show_multiple_matched_tensors
 from functions.helper.weights_init import weights_init
-from functions.setup_notebook.helpers_display import compute_display_params, get_tune_session
+from FlexCNN_for_Medical_Physics.functions.helper.displays_and_reports import compute_display_params, get_tune_session
 
 
-def train_test_visualize_SUP(config, paths, settings):
+def run_SUP(config, paths, settings):
     """
     Train, test, or visualize a supervisory-loss network using explicit dicts.
     """
@@ -47,8 +47,8 @@ def train_test_visualize_SUP(config, paths, settings):
     num_epochs = settings.get('num_epochs', 1)
     load_state = settings.get('load_state', False)
     save_state = settings.get('save_state', False)
-    checkpoint_path = paths.get('checkpoint_path', os.path.join(paths['checkpoint_dirPath'], settings.get('checkpoint_file', 'checkpoint.pt')))
-    tune_dataframe_path = settings.get('tune_dataframe_path', None)
+    checkpoint_path = paths.get('checkpoint_path', None)
+    tune_dataframe_path = paths.get('tune_dataframe_path', None)
     tune_dataframe_fraction = settings.get('tune_dataframe_fraction', 1.0)
     tune_max_t = settings.get('tune_max_t', 0)
 
@@ -78,7 +78,7 @@ def train_test_visualize_SUP(config, paths, settings):
 
     # Data loader
     dataloader = DataLoader(
-        NpArrayDataSet(image_path=settings['image_path'], sino_path=settings['sino_path'], config=config,
+        NpArrayDataSet(image_path=paths['image_path'], sino_path=paths['sino_path'], config=config,
                        image_size=image_size, image_channels=image_channels, sino_size=sino_size, sino_channels=sino_channels,
                        augment=augment, offset=offset, num_examples=num_examples, sample_division=sample_division),
         batch_size=batch_size,

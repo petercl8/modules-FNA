@@ -13,6 +13,7 @@ This notebook is located here: ./FlexCNN_Medical_Physics/context_only/stitching_
 - Prefer modern Python (3.6+) features like f-strings and type hints
 
 ## Naming Conventions
+- When deriving new code from existing code, keep variable and function names the same.
 - Use snake_case for function names and variable names
 - For long variable names, combine snake_case and camelCase for readability (e.g., long_variableName)
 - Use PascalCase for class names, interfaces, and type aliases

@@ -1,6 +1,6 @@
 ## Note: This function still needs to be updated for SSIM and testing with the test set. See 'START HERE' comment below.
 
-def train_test_CYCLE(config, checkpoint_dirPath=None, load_state=False, save_state=False):
+def run_CYCLE(config, checkpoint_dirPath=None, load_state=False, save_state=False):
     '''
     Note: Arguments are set to None/False to ensure that when RayTune calles train(), states are not saved/loaded. This uses up way too much hard drive space.
     Note: you may want to use 'model.train()' to put model back into training mode if you put it into eval mode at some point...

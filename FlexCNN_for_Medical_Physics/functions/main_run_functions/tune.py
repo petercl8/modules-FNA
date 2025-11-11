@@ -1,4 +1,4 @@
-from FlexCNN_for_Medical_Physics.functions.main_run_functions import train_test_visualize_SUP
+from FlexCNN_for_Medical_Physics.functions.main_run_functions import run_SUP
 
 
 def tune(tune_max_t=40, trainable='SUP', grace_period=1):
@@ -95,11 +95,11 @@ def tune(tune_max_t=40, trainable='SUP', grace_period=1):
 
     ## Which trainable do you want to use? ##
     if trainable=='SUP':
-        trainable_with_resources = tune.with_resources(train_test_visualize_SUP, {"CPU":num_CPUs,"GPU":num_GPUs}) # train_Supervisory_Sym is a function of the config dictionary, but we don't state that explicitly.
+        trainable_with_resources = tune.with_resources(run_SUP, {"CPU":num_CPUs,"GPU":num_GPUs}) # train_Supervisory_Sym is a function of the config dictionary, but we don't state that explicitly.
     elif trainable=='GAN':
-        trainable_with_resources = tune.with_resources(train_test_GAN, {"CPU":num_CPUs,"GPU":num_GPUs})
+        trainable_with_resources = tune.with_resources(run_GAN, {"CPU":num_CPUs,"GPU":num_GPUs})
     elif trainable=='CYCLE':
-        trainable_with_resources = tune.with_resources(train_test_CYCLE, {"CPU":num_CPUs,"GPU":num_GPUs})
+        trainable_with_resources = tune.with_resources(run_CYCLE, {"CPU":num_CPUs,"GPU":num_GPUs})
 
     ## If starting from scratch ##
     if tune_restore==False:

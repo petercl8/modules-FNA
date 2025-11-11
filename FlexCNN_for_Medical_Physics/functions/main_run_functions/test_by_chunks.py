@@ -24,7 +24,7 @@ def test_by_chunks(test_begin_at=0, test_chunk_size=5000, testset_size = 35000, 
         print('###############################################')
 
         # Since run_mode=='test', the training function returns a test dataframe. #
-        chunk_dataframe = train_test_visualize_SUP(config, offset=index, num_examples=test_chunk_size, sample_division=sample_division)
+        chunk_dataframe = run_SUP(config, offset=index, num_examples=test_chunk_size, sample_division=sample_division)
         chunk_dataframe_path = os.path.join(test_dataframe_dirPath, save_filename)
         chunk_dataframe.to_csv(chunk_dataframe_path, index=False)
         label_num += 1
