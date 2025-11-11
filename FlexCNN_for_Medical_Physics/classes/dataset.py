@@ -4,7 +4,11 @@ from torch.utils.data import Dataset
 from torchvision import transforms
 import numpy as np
 
+resize_warned = False  # Module-level flag to ensure warning is printed only once
+
 def NpArrayDataLoader(image_array, sino_array, config, image_size = 90, sino_size=90, image_channels=1, sino_channels=1, augment=False, index=0, train_type='SUP', train_SI=True, device='cuda'):
+    global resize_warned
+
     '''
     Function to load an image and a sinogram. Returns 4 pytorch tensors: the original dataset sinogram and image,
     and scaled and (optionally) normalized sinograms and images.
@@ -115,8 +119,18 @@ def NpArrayDataLoader(image_array, sino_array, config, image_size = 90, sino_siz
             image_multChannel, sinogram_multChannel = HorizontalFlip(image_multChannel, sinogram_multChannel)
 
     ## Create A Set of Resized Outputs ##
+    orig_image_h, orig_image_w = image_multChannel.shape[1:]
+    orig_sino_h, orig_sino_w = sinogram_multChannel.shape[1:]
+
     sinogram_multChannel_resize = transforms.Resize(size = (sino_size, sino_size), antialias=True)(sinogram_multChannel)
     image_multChannel_resize    = transforms.Resize(size = (image_size, image_size), antialias=True)(image_multChannel)
+
+    # Warn if resizing changes dimensions
+    if not resize_warned:
+        if (orig_image_h, orig_image_w) != (image_size, image_size) or (orig_sino_h, orig_sino_w) != (sino_size, sino_size):
+            print(f"Warning: Dataset resized. Original image size: ({orig_image_h}, {orig_image_w}), target: ({image_size}, {image_size}). "
+                  f"Original sinogram size: ({orig_sino_h}, {orig_sino_w}), target: ({sino_size}, {sino_size}).")
+            resize_warned = True
 
     ## (Optional) Normalize Resized Outputs Along Channel Dimension ##
     if SI_normalize:

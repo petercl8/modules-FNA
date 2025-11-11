@@ -1,75 +1,59 @@
-'''
-Note: It makes no sense to "test" a GAN or use SSIM since there is nothing to compare it to. Therefore, this functionality is left out here.
-Also, now that you've defined assigned the checkpoint_dirPath and test_dataframe_dirPath in the "User Parameters cell", you can get rid of the path constructions below.
+from functions.setup_notebook.helpers_display import compute_display_params, get_tune_session
 
-'''
-def train_test_GAN(config, checkpoint_dirPath=None, load_state=False, save_state=False):
-    '''
-    Note: Arguments are set to False/None to ensure that when RayTune calles train(), states are not saved/loaded
-    Note: you may want to use 'model.train()' to put model back into training mode if you put it into eval mode at some point...
-    '''
+def train_test_GAN(config, paths, settings):
+    """
+    Train a GAN network. Testing functionality is not included.
+    """
     print('Training GAN only!!')
 
-    ## Grab from Config ##
+    # Compute batch_size and display_step
+    batch_size, display_step = compute_display_params(config, settings)
 
-    batch_size=config['batch_size']
-    gen_adv_criterion=config['gen_adv_criterion']
-    scale=config['SI_scale'] if train_SI==True else config['IS_scale']
+    # Initialize Ray Tune session
+    session = get_tune_session()
 
-    ## Tensorboard ##
-    writer=SummaryWriter(tensorboard_dir)
+    ############################
+    ### Initialize Variables ###
+    ############################
 
-    # Generators/Discriminators #
+    gen_adv_criterion = config['gen_adv_criterion']
+    scale = config['SI_scale'] if config['train_SI'] else config['IS_scale']
 
-    ## These are the original networks, and work great with 71x71 images ##
-    #disc = Disc_I_Orig(config=config).to(device)
-    #gen =  Gen_SI_Orig(config=config).to(device)
+    ###########################
+    ### Instantiate Classes ###
+    ###########################
 
-    ## These are the modified networks, for 90x90, and also work great ##
-    #disc = Disc_I_Orig_90(config=config).to(device)
-    #gen = Gen_SI_Orig_90(config=config).to(device)
-
-    if train_SI==True:
-        ## Now let's try a flex generator and Gen_SI_Orig_90 discriminator ##
-        disc_adv_criterion=config['SI_disc_adv_criterion']
-        disc = Disc_I_90(config=config, input_channels=image_channels).to(device)
-        gen =  Gen_90(config=config, gen_SI=True, input_channels=sino_channels, output_channels=image_channels).to(device)
-        gen_opt = torch.optim.Adam(gen.parameters(), lr=config['gen_lr'], betas=(config['gen_b1'], config['gen_b2'])) #betas are optional inputs
+    if config['train_SI']:
+        disc_adv_criterion = config['SI_disc_adv_criterion']
+        disc = Disc_I_90(config=config, input_channels=config['image_channels']).to(settings['device'])
+        gen = Gen_90(config=config, gen_SI=True, input_channels=config['sino_channels'], output_channels=config['image_channels']).to(settings['device'])
+        gen_opt = torch.optim.Adam(gen.parameters(), lr=config['gen_lr'], betas=(config['gen_b1'], config['gen_b2']))
         disc_opt = torch.optim.Adam(disc.parameters(), lr=config['SI_disc_lr'], betas=(config['SI_disc_b1'], config['SI_disc_b2']))
     else:
-        disc_adv_criterion=config['IS_disc_adv_criterion']
-        disc = Disc_S_90(config=config, input_channels=sino_channels).to(device)
-        gen =  Gen_90(config=config, gen_SI=False, input_channels=image_channels, output_channels=sino_channels).to(device)
-        gen_opt = torch.optim.Adam(gen.parameters(), lr=config['gen_lr'], betas=(config['gen_b1'], config['gen_b2'])) #betas are optional inputs
+        disc_adv_criterion = config['IS_disc_adv_criterion']
+        disc = Disc_S_90(config=config, input_channels=config['sino_channels']).to(settings['device'])
+        gen = Gen_90(config=config, gen_SI=False, input_channels=config['image_channels'], output_channels=config['sino_channels']).to(settings['device'])
+        gen_opt = torch.optim.Adam(gen.parameters(), lr=config['gen_lr'], betas=(config['gen_b1'], config['gen_b2']))
         disc_opt = torch.optim.Adam(disc.parameters(), lr=config['IS_disc_lr'], betas=(config['IS_disc_b1'], config['IS_disc_b2']))
 
-    ## Load Data ##
-    dataloader = DataLoader(
-        NpArrayDataSet(image_path=image_path, sino_path=sino_path, config=config, resize_size=resize_size, image_channels=image_channels, sino_channels=sino_channels, offset=True),
-        batch_size=batch_size,
-        shuffle=shuffle
-    )
+    ##############################
+    ### Set Initial Conditions ###
+    ##############################
 
-    ## Load Checkpoint ##
-    if checkpoint_dirPath and load_state:
-        # Load dictionary
-        checkpoint_path = os.path.join(checkpoint_dirPath, checkpoint_file)
-        checkpoint = torch.load(checkpoint_path)
-        # Load values from dictionary
-        start_epoch = checkpoint['epoch'] #If interrupted, this epoch may be trained more than once
-        end_epoch = start_epoch + num_epochs
-        batch_step = checkpoint['batch_step']
+    if settings['load_state']:
+        checkpoint = torch.load(paths['checkpoint_path'])
         gen.load_state_dict(checkpoint['gen_state_dict'])
         gen_opt.load_state_dict(checkpoint['gen_opt_state_dict'])
         disc.load_state_dict(checkpoint['disc_state_dict'])
         disc_opt.load_state_dict(checkpoint['disc_opt_state_dict'])
     else:
         print('Starting from scratch')
-        start_epoch=0
-        end_epoch=num_epochs
-        batch_step = 0
         gen = gen.apply(weights_init)
-        disc = disc.apply(weights_init) # Both gen & disc inherit nn.Module functionality (.apply())
+        disc = disc.apply(weights_init)
+
+    ########################
+    ### Loop Over Epochs ###
+    ########################
 
     ## Loop Over Epochs ##
     for epoch in range(start_epoch, end_epoch):

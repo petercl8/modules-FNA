@@ -4,9 +4,12 @@ import sys
 
 
 def construct_config(
-    run_mode,
     train_type,
     train_SI,
+    image_size,
+    sino_size,
+    image_channels,
+    sino_channels,
     config_SUP_SI=None,
     config_SUP_IS=None,
     config_GAN_SI=None,
@@ -21,110 +24,34 @@ def construct_config(
     config_GAN_RAY_cycle=None):
 
     """
-    Combines configuration dictionaries based on run_mode, train_type, and train_SI.
+    Combines configuration dictionaries based on train_type and train_SI.
     Returns the appropriate config dictionary.
     """
 
     # Normalize strings (avoid accidental None or case mismatch)
-    run_mode = str(run_mode).lower()
     train_type = str(train_type).upper()
 
     # Train, test, or visualize modes
-    if run_mode in ['train', 'test', 'visualize']:
-        if train_type == 'SUP':
-            config = config_SUP_SI if train_SI else config_SUP_IS
-        elif train_type == 'GAN':
-            config = config_GAN_SI if train_SI else config_GAN_IS
-        elif train_type == 'CYCLEGAN':
-            config = config_CYCLEGAN
-        elif train_type == 'CYCLESUP':
-            config = config_CYCLESUP
-        else:
-            raise ValueError(f"Unknown train_type '{train_type}' for run_mode '{run_mode}'.")
-
-    # Tune mode
-    elif run_mode == 'tune':
-        if train_type == 'SUP':
-            config = {**(config_RAY_SI if train_SI else config_RAY_IS), **config_RAY_SUP}
-        elif train_type == 'GAN':
-            config = {**(config_RAY_SI if train_SI else config_RAY_IS), **config_RAY_GAN}
-        elif train_type == 'CYCLESUP':
-            config = {**config_SUP_SI, **config_SUP_IS, **config_SUP_RAY_cycle}
-        elif train_type == 'CYCLEGAN':
-            config = {**config_GAN_SI, **config_GAN_IS, **config_GAN_RAY_cycle}
-        else:
-            raise ValueError(f"Unknown train_type '{train_type}' for run_mode '{run_mode}'.")
+    if train_type == 'SUP':
+        config = config_SUP_SI if train_SI else config_SUP_IS
+    elif train_type == 'GAN':
+        config = config_GAN_SI if train_SI else config_GAN_IS
+    elif train_type == 'CYCLEGAN':
+        config = config_CYCLEGAN
+    elif train_type == 'CYCLESUP':
+        config = config_CYCLESUP
     else:
-        raise ValueError(f"Unknown run_mode '{run_mode}'.")
+        raise ValueError(f"Unknown train_type '{train_type}'.")
+
+    # Add data dimensions to config
+    config['image_size'] = image_size
+    config['sino_size'] = sino_size
+    config['image_channels'] = image_channels
+    config['sino_channels'] = sino_channels
+    config['train_SI'] = train_SI
 
     return config
 
-def list_compute_resources(check_ray_tune=False):
-    """
-    Quickly lists available CPUs and GPUs.
-    Optionally checks Ray/Ray Tune resources if check_ray_tune=True.
-    """
-    import os
-    import multiprocessing
-    import torch
-
-    # Basic system info
-    cpu_count = multiprocessing.cpu_count()
-    gpu_count = torch.cuda.device_count()
-    gpu_names = [torch.cuda.get_device_name(i) for i in range(gpu_count)] if gpu_count else []
-
-    print(f"CPUs available: {cpu_count}")
-    print(f"GPUs available: {gpu_count}")
-    if gpu_count:
-        for i, name in enumerate(gpu_names):
-            print(f"  GPU {i}: {name}")
-
-    # Optional Ray/Ray Tune resource check
-    if check_ray_tune:
-        import ray
-        ray.shutdown()
-        ray.init(ignore_reinit_error=True, include_dashboard=False)
-        print("\nRay resources:")
-        print(ray.available_resources())
-
-
-def setup_project_dirs(IN_COLAB, project_local_dirPath, project_colab_dirPath=None, mount_colab_drive=True):
-    """
-    Sets up project directories and adds the project path to sys.path.
-
-    Parameters
-    ----------
-    project_local_dirPath : str
-        Path to the project on the local machine.
-    project_colab_dirPath : str, optional
-        Path to the project on Google Drive (used only in Colab).
-    mount_colab_drive : bool, default True
-        Whether to mount Google Drive if running in Colab.
-
-    Returns
-    -------
-    str
-        The path being used for the project (Colab or local).
-    """
-
-    # --- Determine project directory ---
-    if IN_COLAB and project_colab_dirPath is not None:
-        if mount_colab_drive:
-            from google.colab import drive
-            drive.mount('/content/drive')
-        project_dirPath = project_colab_dirPath
-    else:
-        project_dirPath = project_local_dirPath
-
-    # --- Add project directory to sys.path if not already present ---
-    if project_dirPath not in sys.path:
-        sys.path.insert(0, project_dirPath)
-
-    # --- Optional debugging: show current sys.path ---
-    # for p in sys.path:
-    #     print("   ", p)
-
-    return project_dirPath
 
 def setup_run_paths(
     project_dirPath,
@@ -141,6 +68,18 @@ def setup_run_paths(
     test_sino_file,
     test_image_file,
     run_mode,
+    device,
+    train_display_step,
+    test_display_step,
+    visualize_batch_size,
+    test_batch_size,
+    # Dataset slicing controls
+    offset=0,
+    num_examples=-1,
+    sample_division=1,
+    tune_iter_per_report=None,
+    tune_examples_per_report=None,
+    tune_even_reporting=False,
     tune_augment=None,
     train_augment=None,
     training_epochs=None,
@@ -184,6 +123,17 @@ def setup_run_paths(
 
     # Run-mode specific settings
     settings = {}
+    settings['run_mode'] = run_mode
+    settings['device'] = device
+    settings['train_display_step'] = train_display_step
+    settings['test_display_step'] = test_display_step
+    settings['visualize_batch_size'] = visualize_batch_size
+    settings['test_batch_size'] = test_batch_size
+    # Dataset slicing controls live in settings for all run modes
+    settings['offset'] = offset
+    settings['num_examples'] = num_examples
+    settings['sample_division'] = sample_division
+
     if run_mode == 'tune':
         settings.update({
             'sino_path': paths['tune_sino_path'],
@@ -200,6 +150,14 @@ def setup_run_paths(
         })
         os.makedirs(paths['tune_dataframe_dirPath'], exist_ok=True)
         settings['tune_dataframe_path'] = os.path.join(paths['tune_dataframe_dirPath'], f"{tune_csv_file}.csv")
+        # Tuning reporting controls: either fixed iterations or even reporting by example count
+        settings['tune_iter_per_report'] = tune_iter_per_report
+        settings['tune_even_reporting'] = tune_even_reporting
+        # Default baseline: 512 examples * 10 iterations = 5120 examples per report
+        if tune_examples_per_report is None and tune_iter_per_report is not None:
+            settings['tune_examples_per_report'] = 512 * tune_iter_per_report
+        else:
+            settings['tune_examples_per_report'] = tune_examples_per_report if tune_examples_per_report is not None else 5120
 
     elif run_mode == 'train':
         settings.update({
