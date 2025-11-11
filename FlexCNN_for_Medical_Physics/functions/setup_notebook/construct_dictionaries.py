@@ -219,18 +219,11 @@ def construct_config(
         else :
             raise ValueError(f"Unknown train_type '{train_type}'.")
 
-print(config)
-
-
-    ####
-
-
     # Add data dimensions to config
     config['image_size'] = image_size
     config['sino_size'] = sino_size
     config['image_channels'] = image_channels
     config['sino_channels'] = sino_channels
     config['train_SI'] = train_SI
-
 
     return config
