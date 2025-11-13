@@ -7,6 +7,7 @@ def list_compute_resources(check_ray_tune=False):
     import os
     import multiprocessing
     import torch
+    import sys
 
     # Basic system info
     cpu_count = multiprocessing.cpu_count()
