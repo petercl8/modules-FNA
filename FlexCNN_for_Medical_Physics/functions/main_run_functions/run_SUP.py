@@ -11,7 +11,7 @@ from functions.helper.metrics import calculate_metric, SSIM, MSE, custom_metric,
 from functions.helper.reconstruction_projection import reconstruct
 from functions.helper.display_images import show_single_unmatched_tensor, show_multiple_matched_tensors
 from functions.helper.weights_init import weights_init
-from FlexCNN_for_Medical_Physics.functions.helper.displays_and_reports import compute_display_params, get_tune_session
+from FlexCNN_for_Medical_Physics.functions.helper.displays_and_reports import compute_display_step, get_tune_session
 
 
 def run_SUP(config, paths, settings):
@@ -22,12 +22,14 @@ def run_SUP(config, paths, settings):
     offset = settings.get('offset', 0)
     num_examples = settings.get('num_examples', -1)
     sample_division = settings.get('sample_division', 1)
+    batch_size = config['batch_size']
+
     print('Dataset offset:', offset)
     print('Dataset num_examples:', num_examples)
     print('Dataset sample_division:', sample_division)
 
     # Compute batch_size and display_step using helper (with integer rounding)
-    batch_size, display_step = compute_display_params(config, settings)
+    display_step = compute_display_step(config, settings)
 
     # Initialize Ray Tune session if available
     session = get_tune_session()
@@ -51,22 +53,23 @@ def run_SUP(config, paths, settings):
     tune_dataframe_path = paths.get('tune_dataframe_path', None)
     tune_dataframe_fraction = settings.get('tune_dataframe_fraction', 1.0)
     tune_max_t = settings.get('tune_max_t', 0)
+    tune_restore= settings.get('tune_restore', False)
 
     # Loss and scales
     sup_criterion = config['sup_criterion']
     scale = config['SI_scale'] if train_SI else config['IS_scale']
 
+
     # Tuning/Test specific initializations
+    if run_mode == 'tune':
+        if tune_restore==False:
+            tune_dataframe = pd.DataFrame({'SI_dropout': [], 'SI_exp_kernel': [], 'SI_gen_fill': [], 'SI_gen_hidden_dim': [], 'SI_gen_neck': [], 'SI_layer_norm': [], 'SI_normalize': [],'SI_pad_mode': [], 'batch_size': [], 'gen_lr': [], 'num_params': [], 'mean_CNN_MSE': [], 'mean_CNN_SSIM': [], 'mean_CNN_CUSTOM': []})
+            tune_dataframe.to_csv(tune_dataframe_path, index=False)
+        else:
+            tune_dataframe = pd.read_csv(tune_dataframe_path)
+
     if run_mode == 'test':
         test_dataframe = pd.DataFrame({'MSE (Network)' : [],  'MSE (FBP)': [],  'MSE (ML-EM)': [], 'SSIM (Network)' : [], 'SSIM (FBP)': [], 'SSIM (ML-EM)': []})
-
-    if run_mode == 'tune' and tune_dataframe_path is not None:
-        # Create or restore tuning dataframe
-        try:
-            tune_dataframe = pd.read_csv(tune_dataframe_path)
-        except Exception:
-            tune_dataframe = pd.DataFrame({'SI_dropout': [], 'SI_exp_kernel': [], 'SI_gen_fill': [], 'SI_gen_hidden_dim': [], 'SI_gen_neck': [], 'SI_layer_norm': [], 'SI_normalize': [], 'SI_pad_mode': [], 'batch_size': [], 'gen_lr': [], 'num_params': [], 'mean_CNN_MSE': [], 'mean_CNN_SSIM': [], 'mean_CNN_CUSTOM': []})
-            tune_dataframe.to_csv(tune_dataframe_path, index=False)
 
     # Model and optimizer
     if train_SI:
@@ -110,19 +113,28 @@ def run_SUP(config, paths, settings):
     mean_CNN_SSIM = 0
     mean_CNN_MSE = 0
     mean_CNN_CUSTOM = 0
-    report_num = 1
+    report_num = 1 # First report to RayTune is report_num = 1
 
     # Timing
-    time_init_full = time.time()
-    time_init_loader = time.time()
+    time_init_full = time.time() # This is reset at the display time so that the full step time is displayed (see below).
+    time_init_loader = time.time() # This is reset at the display time, but also reset at the end of the inner "for loop", so that only displays the data loading time.
 
-    # Epoch loop
+    ########################
+    ### Loop over Epochs ###
+    ########################
+
     for epoch in range(start_epoch, end_epoch):
+
+        #########################
+        ### Loop Over Batches ###
+        #########################
+        
         for sino_ground, sino_ground_scaled, image_ground, image_ground_scaled in iter(dataloader):
             # Times
-            _ = display_times('loader time', time_init_loader, show_times)
-            time_init_full = display_times('FULL STEP TIME', time_init_full, show_times)
-
+            _ = display_times('loader time', time_init_loader, show_times)             # _ is a dummy variable that isn't used in this loop
+            time_init_full = display_times('FULL STEP TIME', time_init_full, 
+            show_times) # This step resets time_init_full after displaying the time so this displays the full time to run the loop over a batch.
+            
             # Inputs/targets
             if train_SI:
                 target = image_ground_scaled
@@ -134,26 +146,43 @@ def run_SUP(config, paths, settings):
             # Forward/optimize
             if run_mode in ('tune', 'train'):
                 time_init_train = time.time()
+
                 gen_opt.zero_grad()
                 CNN_output = gen(input_)
+
                 if run_mode == 'train' and torch.sum(CNN_output[1, 0, :]) < 0:
                     print('PIXEL VALUES SUM TO A NEGATIVE NUMBER. IF THIS CONTINUES FOR AWHILE, YOU MAY NEED TO RESTART')
+
+                # Update gradients                    
                 gen_loss = sup_criterion(CNN_output, target)
                 gen_loss.backward()
                 gen_opt.step()
+
+                # Keep track of the average generator loss
                 mean_gen_loss += gen_loss.item() / display_step
                 _ = display_times('training time', time_init_train, show_times)
+
+            ## If Testing or Vizualizing, calculate output only ## 
             else:
                 CNN_output = gen(input_).detach()
 
+            # Increment batch_step
             batch_step += 1
 
-            # Metrics and reconstructions
+            ####################################
+            ### Run-Type Specific Operations ###
+            ####################################
+
             time_init_metrics = time.time()
+
+            # If Tuning or Training, we only calculate the mean value of the metrics, but not dataframes or reconstructions. Mean values are used to calculate the optimization metrics #
+
             if run_mode in ('tune', 'train'):
-                mean_CNN_SSIM += calculate_metric(target, CNN_output, SSIM) / display_step
-                mean_CNN_MSE += calculate_metric(target, CNN_output, MSE) / display_step
+                mean_CNN_SSIM += calculate_metric(target, CNN_output, SSIM) / display_step # The SSIM function can only take single images as inputs, not batches, so we use a wrapper function and pass batches to it.
+                mean_CNN_MSE += calculate_metric(target, CNN_output, MSE) / display_step # The MSE function can take either single images or batches. We use the wrapper for consistency.
+
                 time_init_custom = time.time()
+                # Custom metrics can take a long time to calculate, so we don't use a wrapper (which would loop through individual images in calculations. If not using this metric, set it to zero in the code base.)
                 mean_CNN_CUSTOM += custom_metric(target, CNN_output) / display_step
                 _ = display_times('Custom metric time', time_init_custom, show_times)
 
@@ -174,7 +203,8 @@ def run_SUP(config, paths, settings):
 
                 if run_mode == 'tune' and session is not None:
                     session.report({'MSE': mean_CNN_MSE, 'SSIM': mean_CNN_SSIM, 'CUSTOM': mean_CNN_CUSTOM, 'example_number': example_num, 'batch_step': batch_step, 'epoch': epoch})
-                    if tune_dataframe_path is not None and int(tune_dataframe_fraction * tune_max_t) == report_num:
+
+                    if int(tune_dataframe_fraction * tune_max_t) == report_num:
                         tune_dataframe = update_tune_dataframe(tune_dataframe, tune_dataframe_path, gen, config, mean_CNN_MSE, mean_CNN_SSIM, mean_CNN_CUSTOM)
                     report_num += 1
 

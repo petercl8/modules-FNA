@@ -6,7 +6,7 @@ import numpy as np
 
 resize_warned = False  # Module-level flag to ensure warning is printed only once
 
-def NpArrayDataLoader(image_array, sino_array, config, image_size = 90, sino_size=90, image_channels=1, sino_channels=1, augment=False, index=0, train_type='SUP', train_SI=True, device='cuda'):
+def NpArrayDataLoader(image_array, sino_array, config, image_size = 90, sino_size=90, image_channels=1, sino_channels=1, augment=False, index=0, network_type='SUP', train_SI=True, device='cuda'):
     global resize_warned
 
     '''
@@ -24,7 +24,7 @@ def NpArrayDataLoader(image_array, sino_array, config, image_size = 90, sino_siz
     index:          index of the image/sinogram pair to grab
     '''
     ## Set Normalization Variables ##
-    if (train_type=='GAN') or (train_type=='SUP'):
+    if (network_type=='GAN') or (network_type=='SUP'):
         if train_SI==True:
             SI_normalize=config['SI_normalize']
             SI_scale=config['SI_scale']

@@ -1,7 +1,7 @@
 import os
 
 
-def setup_paths(base_dirs, data_files, mode_files, run_mode, test_set_type='test', visualize_type='train'):
+def setup_paths(run_mode, base_dirs, data_files, mode_files, test_ops, viz_ops):
     """
     Build all path-related configuration.
     
@@ -20,6 +20,9 @@ def setup_paths(base_dirs, data_files, mode_files, run_mode, test_set_type='test
         paths dict with directory paths, mode-specific data paths, active sino/image paths, checkpoint_path,
         tune/test dataframe paths.
     """
+    test_set_type = test_ops.get('testset_type', 'test')
+    visualize_type = viz_ops.get('visualize_type', 'test')
+
     paths = {}
     
     # Base directories
@@ -76,19 +79,20 @@ def setup_paths(base_dirs, data_files, mode_files, run_mode, test_set_type='test
     return paths
 
 
-def setup_settings(common_settings, tune_opts, train_opts, test_opts, viz_opts, run_mode):
+def setup_settings( run_mode, common_settings, tune_opts, train_opts, test_opts, viz_opts):
     """
     Build all non-path runtime settings.
     
     Args:
-        common_settings: dict with keys: device, offset, num_examples, sample_division,
-                         train_display_step, test_display_step, visualize_batch_size, test_batch_size
-        tune_opts: dict with keys: tune_augment, tune_iter_per_report, tune_examples_per_report,
+        common_settings: dict with keys: device, num_examples
+        tune_opts: dict with keys: tune_augment, tune_batches_per_report, tune_examples_per_report,
                    tune_even_reporting, tune_max_t, tune_dataframe_fraction
         train_opts: dict with keys: train_augment, training_epochs, train_load_state, train_save_state,
-                    train_show_times, train_sample_division
-        test_opts: dict with keys: test_show_times
-        viz_opts: dict with keys: visualize_shuffle, visualize_offset
+                    train_show_times, train_sample_division, train_display_step
+        test_opts: dict with keys: test_show_times, test_display_step, test_batch_size, test_chunk_size,
+                   testset_size, test_begin_at, test_compute_MLEM, testset_type, test_merge_dataframes,
+                   test_shuffle, test_sample_division
+        viz_opts: dict with keys: visualize_shuffle, visualize_offset, visualize_batch_size, visualize_type
         run_mode: 'tune', 'train', 'test', or 'visualize'
     
     Returns:
@@ -96,38 +100,34 @@ def setup_settings(common_settings, tune_opts, train_opts, test_opts, viz_opts, 
     """
     settings = {}
     
-    # Common settings
+    # Common settings (now minimal)
     settings['run_mode'] = run_mode
     settings['device'] = common_settings['device']
-    settings['train_display_step'] = common_settings['train_display_step']
-    settings['test_display_step'] = common_settings['test_display_step']
-    settings['visualize_batch_size'] = common_settings['visualize_batch_size']
-    settings['test_batch_size'] = common_settings['test_batch_size']
-    settings['offset'] = common_settings.get('offset', 0)
     settings['num_examples'] = common_settings.get('num_examples', -1)
-    settings['sample_division'] = common_settings.get('sample_division', 1)
     
     # Mode-specific
     if run_mode == 'tune':
         settings['augment'] = tune_opts['tune_augment']
         settings['shuffle'] = True
-        settings['num_epochs'] = 1000
+        settings['num_epochs'] = 1000  # Tuning is stopped when the iteration = tune_max_t (defined later). We set num_epochs to a large number so tuning doesn't terminate early.
         settings['load_state'] = False
         settings['save_state'] = False
         settings['offset'] = 0
         settings['show_times'] = False
         settings['sample_division'] = 1
-        settings['tune_iter_per_report'] = tune_opts.get('tune_iter_per_report')
-        settings['tune_even_reporting'] = tune_opts.get('tune_even_reporting', False)
-        settings['tune_max_t'] = tune_opts.get('tune_max_t', 0)
+        
+        settings['tune_exp_name']= tune_opts['tune_exp_name']
+        settings['tune_scheduler'] = tune_opts['tune_scheduler']
         settings['tune_dataframe_fraction'] = tune_opts.get('tune_dataframe_fraction', 1.0)
-        tune_examples_per_report = tune_opts.get('tune_examples_per_report')
-        tune_iter_per_report = tune_opts.get('tune_iter_per_report')
-        if tune_examples_per_report is None and tune_iter_per_report is not None:
-            settings['tune_examples_per_report'] = 512 * tune_iter_per_report
-        else:
-            settings['tune_examples_per_report'] = tune_examples_per_report if tune_examples_per_report is not None else 5120
-    
+        settings['tune_restore'] = tune_opts.get('tune_restore', False)
+        settings['tune_max_t'] = tune_opts.get('tune_max_t', 100)
+        settings['tune_minutes'] = tune_opts.get('tune_minutes', 180)
+        settings['tune_for'] = tune_opts['tune_for']
+        settings['tune_even_reporting'] = tune_opts.get('tune_even_reporting', False)
+        settings['tune_batches_per_report'] = tune_opts.get('tune_batches_per_report')
+        settings['tune_examples_per_report'] = tune_opts.get('tune_examples_per_report')
+        settings['tune_augment'] = tune_opts['tune_augment']
+
     elif run_mode == 'train':
         settings['augment'] = train_opts['train_augment']
         settings['shuffle'] = True
@@ -137,6 +137,7 @@ def setup_settings(common_settings, tune_opts, train_opts, test_opts, viz_opts, 
         settings['offset'] = 0
         settings['show_times'] = train_opts['train_show_times']
         settings['sample_division'] = train_opts['train_sample_division']
+        settings['train_display_step'] = train_opts['train_display_step']
     
     elif run_mode == 'test':
         settings['augment'] = False
@@ -146,7 +147,9 @@ def setup_settings(common_settings, tune_opts, train_opts, test_opts, viz_opts, 
         settings['save_state'] = False
         settings['offset'] = 0
         settings['show_times'] = test_opts['test_show_times']
-        settings['sample_division'] = 1
+        settings['sample_division'] = test_opts.get('test_sample_division', 1)
+        settings['test_display_step'] = test_opts['test_display_step']
+        settings['test_batch_size'] = test_opts['test_batch_size']
     
     elif run_mode == 'visualize':
         settings['augment'] = False
@@ -157,6 +160,7 @@ def setup_settings(common_settings, tune_opts, train_opts, test_opts, viz_opts, 
         settings['show_times'] = False
         settings['offset'] = viz_opts['visualize_offset']
         settings['sample_division'] = 1
+        settings['visualize_batch_size'] = viz_opts['visualize_batch_size']
     else:
         raise ValueError(f"Unknown run_mode: {run_mode}")
     
@@ -165,12 +169,9 @@ def setup_settings(common_settings, tune_opts, train_opts, test_opts, viz_opts, 
 
 def construct_config(
     run_mode,
-    train_type,
-    train_SI,
-    image_size,
-    sino_size,
-    image_channels,
-    sino_channels,
+    network_opts,
+    test_opts,
+    viz_opts,
     config_SUP_SI=None,
     config_SUP_IS=None,
     config_GAN_SI=None,
@@ -185,39 +186,53 @@ def construct_config(
     config_GAN_RAY_cycle=None):
 
     """
-    Combines configuration dictionaries based on train_type and train_SI.
-    Returns the appropriate config dictionary.
+    Combines configuration dictionaries based on run_mode, network_type, and train_SI.
+    
+    Args:
+        run_mode: 'tune', 'train', 'test', or 'visualize'
+        network_opts: dict with keys: network_type, train_SI, image_size, sino_size, image_channels, sino_channels
+        test_opts: dict with keys: test_batch_size, etc.
+        viz_opts: dict with keys: visualize_batch_size, etc.
+        config_SUP_SI, config_SUP_IS, etc.: Network configuration dictionaries
+    
+    Returns:
+        config dict with all network hyperparameters and data dimensions
     """
+    
+    # Extract network options
+    network_type = str(network_opts['network_type']).upper()  # Normalize strings
+    train_SI = network_opts['train_SI']
+    image_size = network_opts['image_size']
+    sino_size = network_opts['sino_size']
+    image_channels = network_opts['image_channels']
+    sino_channels = network_opts['sino_channels']
 
-    # Normalize strings (avoid accidental None or case mismatch)
-    train_type = str(train_type).upper()
-
-    ####
-    ## Combine Dictionaries ##
-    if run_mode=='train' or 'test' or 'visualize':
-        # Train, test, or visualize modes
-        if train_type == 'SUP':
+    # Combine dictionaries based on run_mode and network_type
+    if run_mode in ['train', 'test', 'visualize']:
+        if network_type == 'SUP':
             config = config_SUP_SI if train_SI else config_SUP_IS
-        elif train_type == 'GAN':
+        elif network_type == 'GAN':
             config = config_GAN_SI if train_SI else config_GAN_IS
-        elif train_type == 'CYCLEGAN':
+        elif network_type == 'CYCLEGAN':
             config = config_CYCLEGAN
-        elif train_type == 'CYCLESUP':
+        elif network_type == 'CYCLESUP':
             config = config_CYCLESUP
         else:
-            raise ValueError(f"Unknown train_type '{train_type}'.")
+            raise ValueError(f"Unknown network_type '{network_type}'.")
 
-    if run_mode=='tune':
-        if train_type=='SUP':
+    elif run_mode == 'tune':
+        if network_type == 'SUP':
             config = {**(config_RAY_SI if train_SI else config_RAY_IS), **config_RAY_SUP}
-        elif train_type=='GAN':
+        elif network_type == 'GAN':
             config = {**(config_RAY_SI if train_SI else config_RAY_IS), **config_RAY_GAN}
-        elif train_type=='CYCLESUP':
+        elif network_type == 'CYCLESUP':
             config = {**config_SUP_SI, **config_SUP_IS, **config_SUP_RAY_cycle}
-        if train_type=='CYCLEGAN':
+        elif network_type == 'CYCLEGAN':
             config = {**config_GAN_SI, **config_GAN_IS, **config_GAN_RAY_cycle}
-        else :
-            raise ValueError(f"Unknown train_type '{train_type}'.")
+        else:
+            raise ValueError(f"Unknown network_type '{network_type}'.")
+    else:
+        raise ValueError(f"Unknown run_mode '{run_mode}'.")
 
     # Add data dimensions to config
     config['image_size'] = image_size
@@ -225,5 +240,11 @@ def construct_config(
     config['image_channels'] = image_channels
     config['sino_channels'] = sino_channels
     config['train_SI'] = train_SI
+
+    # Override batch size for test or visualize modes. Otherwise, when testing or visualizing, the batch size from training/tuning would be used.
+    if run_mode == 'test':
+        config['batch_size'] = test_opts['test_batch_size']
+    elif run_mode == 'visualize':
+        config['batch_size'] = viz_opts['visualize_batch_size']
 
     return config

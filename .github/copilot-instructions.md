@@ -11,6 +11,9 @@ This notebook is located here: ./FlexCNN_Medical_Physics/context_only/stitching_
 ## Code Style
 - Avoid matlotlib unless necessary for specific customizations. Prefer Pandas built-in plotting functions for simplicity.
 - Prefer modern Python (3.6+) features like f-strings and type hints
+- When modifying existing code, match the existing style unless there is a compelling reason to change it
+- When modifying lists of parameters, maintain the existing order unless there is a compelling reason to change it
+- When modifying dictionaries, maintain the existing key order unless there is a compelling reason to change it
 
 ## Naming Conventions
 - When deriving new code from existing code, keep variable and function names the same.
@@ -19,6 +22,9 @@ This notebook is located here: ./FlexCNN_Medical_Physics/context_only/stitching_
 - Use PascalCase for class names, interfaces, and type aliases
 - Prefix private class members with underscore (_)
 - Use ALL_CAPS for constants
+
+## Comments
+- When deriving new code from existing code, keep comments the same.
 
 ## Code Quality
 - Use meaningful variable and function names that clearly describe their purpose
