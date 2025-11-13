@@ -1,4 +1,4 @@
-from FlexCNN_for_Medical_Physics.functions.main_run_functions import run_SUP
+from FlexCNN_for_Medical_Physics.functions.main_run_functions.run_supervisory import run_SUP
 
 
 def tune(tune_max_t=40, trainable='SUP', grace_period=1):
