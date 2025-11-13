@@ -1,5 +1,3 @@
-from functions.setup_notebook.helpers_display import compute_display_params, get_tune_session
-
 def run_GAN(config, paths, settings):
     """
     Train a GAN network. Testing functionality is not included.
