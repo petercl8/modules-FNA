@@ -191,7 +191,7 @@ def train_Supervisory_Sym(config, offset=0, num_examples=-1, sample_division=1):
             ### VISUALIZATION / REPORTING CODE ###
             ######################################
 
-            if batch_step % display_step == 0 # and (batch_step > 0 or run_mode != 'tune'):
+            if batch_step % display_step == 0: # and (batch_step > 0 or run_mode != 'tune'):
 
                 time_init_visualization=time.time()
 
