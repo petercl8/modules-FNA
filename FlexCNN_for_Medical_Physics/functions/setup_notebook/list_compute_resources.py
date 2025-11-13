@@ -7,7 +7,6 @@ def list_compute_resources(check_ray_tune=False):
     import os
     import multiprocessing
     import torch
-    import sys
 
     # Basic system info
     cpu_count = multiprocessing.cpu_count()
@@ -47,6 +46,8 @@ def setup_project_dirs(IN_COLAB, project_local_dirPath, project_colab_dirPath=No
     str
         The path being used for the project (Colab or local).
     """
+
+    import sys
 
     # --- Determine project directory ---
     if IN_COLAB and project_colab_dirPath is not None:
