@@ -4,8 +4,8 @@ import torch
 import pandas as pd
 from torch.utils.data import DataLoader
 
-from classess.generators import Generator
-from classess.dataset import NpArrayDataSet
+from classes.generators import Generator
+from classes.dataset import NpArrayDataSet
 from functions.helper.timing import display_times
 from functions.helper.metrics import calculate_metric, SSIM, MSE, custom_metric, reconstruct_images_and_update_test_dataframe, update_tune_dataframe
 from functions.helper.reconstruction_projection import reconstruct
