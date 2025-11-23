@@ -1,4 +1,6 @@
 ## Note: This function still needs to be updated for SSIM and testing with the test set. See 'START HERE' comment below.
+from FlexCNN_for_Medical_Physics.classes.generators import Generator
+from FlexCNN_for_Medical_Physics.classes.discriminators import Disc_I_90, Disc_S_90
 
 def run_CYCLE(config, checkpoint_dirPath=None, load_state=False, save_state=False):
     '''
@@ -17,10 +19,10 @@ def run_CYCLE(config, checkpoint_dirPath=None, load_state=False, save_state=Fals
     writer=SummaryWriter(tensorboard_dir)
 
     ## Initialize Generators/Discriminator/Summary Writer ##
-    disc_I = Disc_S_90(config=config, input_channels=image_channels).to(device)
-    disc_S = Disc_S_90(config=config, input_channels=sino_channels).to(device)
-    gen_SI = Gen_90(config=config, gen_SI=True, input_channels=sino_channels, output_channels=image_channels).to(device)
-    gen_IS = Gen_90(config=config, gen_SI=False, input_channels=image_channels, output_channels=sino_channels).to(device)
+    disc_I = Disc_I_90(config=config).to(device)
+    disc_S = Disc_S_90(config=config).to(device)
+    gen_SI = Generator(config=config, gen_SI=True).to(device)
+    gen_IS = Generator(config=config, gen_SI=False).to(device)
 
     gen_both_opt = torch.optim.Adam(list(gen_SI.parameters()) + list(gen_IS.parameters()), lr=gen_lr, betas=(gen_b1, gen_b2)) # Common optimizer
     disc_I_opt = torch.optim.Adam(disc_I.parameters(), lr=config['SI_disc_lr'], betas=(config['SI_disc_b1'], config['SI_disc_b2']))

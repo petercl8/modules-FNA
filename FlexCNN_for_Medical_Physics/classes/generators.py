@@ -93,19 +93,31 @@ def expand_block(in_channels, out_channels, kernel_size=3, stride=2, padding=0, 
 ###########################
 
 class Generator(nn.Module):
-    def __init__(self, config, gen_SI=True, input_size=90, input_channels=3, output_channels=3):
+    def __init__(self, config, gen_SI=True):
         '''
-        A class to generate a 90x90-->90x90 or 180x180-->90x90 encoder-decoder network. The role of each item in the "config" dictionary is commented below. In addition, the class constructor takes the following as inputs:
+        A class to generate a 90x90-->90x90 or 180x180-->90x90 encoder-decoder network.
+        The role of each item in the "config" dictionary is commented below.
 
-        gen_SI:             Equals True if the generator generates images from sinograms. Equals false if the generator generates sinograms from images.
-                            In a cycle-consistent network, this class generates two networks from the same config dictionary. Hence, the need
-                            for this parameter.
-        input_size:         size of the input (90 or 180).
-        input_channels:     number of generator input channels
-        output_channels:    number of generator output channels
+        Args:
+            config: Dictionary containing network hyperparameters and data dimensions (image_size, sino_size, 
+                    image_channels, sino_channels). The constructor uses these to automatically determine 
+                    input_size, input_channels, and output_channels based on gen_SI.
+            gen_SI: Boolean - True if generating images from sinograms (SI), False if generating sinograms 
+                    from images (IS). In a cycle-consistent network, this class generates two networks from 
+                    the same config dictionary.
         '''
-
+        
         super(Generator, self).__init__()
+        
+        # Derive input/output parameters from config based on gen_SI
+        if gen_SI:  # Sinogram → Image
+            input_size = config['sino_size']
+            input_channels = config['sino_channels']
+            output_channels = config['image_channels']
+        else:  # Image → Sinogram
+            input_size = config['image_size']
+            input_channels = config['image_channels']
+            output_channels = config['sino_channels']
 
         ## Set Instance Variables ##
         self.output_channels = output_channels

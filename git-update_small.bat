@@ -1,21 +1,42 @@
 @echo off
-:: ==============================
-:: Automatic Update: Commit & Push
-:: ==============================
+setlocal enabledelayedexpansion
 
-:: Stage all changes (new, modified, deleted files)
+set SOURCE_NOTEBOOK=.\FlexCNN_for_Medical_Physics\stitching_notebook.ipynb
+set CFG=%USERPROFILE%\.my_sync_settings\drive_path.cfg
+
+:: --- Load stored Google Drive path ---
+for /f "usebackq delims=" %%A in ("%CFG%") do set "DRIVE_DEST_PATH=%%A"
+
+:: Remove any surrounding quotes
+set "DRIVE_DEST_PATH=%DRIVE_DEST_PATH:"=%"
+
+:: Trim trailing spaces
+set "DRIVE_DEST_PATH=%DRIVE_DEST_PATH:~0,-0%"  :: this forces batch to normalize string
+for /f "tokens=* delims= " %%A in ("%DRIVE_DEST_PATH%") do set "DRIVE_DEST_PATH=%%A"
+
+:: Validate folder exists
+if not exist "%DRIVE_DEST_PATH%\" (
+    echo ERROR: Google Drive folder "%DRIVE_DEST_PATH%" does not exist!
+    echo Please run the machine setup script first or check the folder.
+    pause
+    exit /b
+)
+
+:: Copy the notebook
+echo Copying notebook to Google Drive folder...
+copy /Y "%SOURCE_NOTEBOOK%" "%DRIVE_DEST_PATH%\stitching_notebook.ipynb"
+echo Notebook copied successfully.
+echo.
+
+:: Git operations
 git add -A
-
-:: Commit changes with default message
-:: - If there are no changes, skip committing
 git diff --cached --quiet
 if %errorlevel%==1 (
     git commit -m "Quick automatic update"
 ) else (
     echo No changes to commit.
 )
-
-:: Push commits to the 'main' branch on the remote 'origin'
 git push origin main
 
 echo Update complete!
+pause

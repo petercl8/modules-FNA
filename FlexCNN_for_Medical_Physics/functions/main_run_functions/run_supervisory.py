@@ -96,11 +96,7 @@ def run_SUP(config, paths, settings):
         test_dataframe = pd.DataFrame({'MSE (Network)' : [],  'MSE (FBP)': [],  'MSE (ML-EM)': [], 'SSIM (Network)' : [], 'SSIM (FBP)': [], 'SSIM (ML-EM)': []})
 
     # Model and optimizer
-    if train_SI:
-        gen = Generator(config=config, gen_SI=True, input_size=sino_size, input_channels=sino_channels, output_channels=image_channels).to(device)
-    else:
-        gen = Generator(config=config, gen_SI=False, input_size=image_size, input_channels=image_channels, output_channels=sino_channels).to(device)
-
+    gen = Generator(config=config, gen_SI=train_SI).to(device)
     gen_opt = torch.optim.Adam(gen.parameters(), lr=config['gen_lr'], betas=(config['gen_b1'], config['gen_b2']))
 
     # Data loader

@@ -1,3 +1,7 @@
+from networkx import config
+from FlexCNN_for_Medical_Physics.classes.generators import Generator
+from FlexCNN_for_Medical_Physics.classes.discriminators import Disc_I_90, Disc_S_90
+
 def run_GAN(config, paths, settings):
     """
     Train a GAN network. Testing functionality is not included.
@@ -23,17 +27,17 @@ def run_GAN(config, paths, settings):
 
     if config['train_SI']:
         disc_adv_criterion = config['SI_disc_adv_criterion']
-        disc = Disc_I_90(config=config, input_channels=config['image_channels']).to(settings['device'])
-        gen = Gen_90(config=config, gen_SI=True, input_channels=config['sino_channels'], output_channels=config['image_channels']).to(settings['device'])
+        disc = Disc_I_90(config=config).to(settings['device'])
+        gen = Generator(config=config, gen_SI=True).to(settings['device'])
         gen_opt = torch.optim.Adam(gen.parameters(), lr=config['gen_lr'], betas=(config['gen_b1'], config['gen_b2']))
         disc_opt = torch.optim.Adam(disc.parameters(), lr=config['SI_disc_lr'], betas=(config['SI_disc_b1'], config['SI_disc_b2']))
     else:
         disc_adv_criterion = config['IS_disc_adv_criterion']
-        disc = Disc_S_90(config=config, input_channels=config['sino_channels']).to(settings['device'])
-        gen = Gen_90(config=config, gen_SI=False, input_channels=config['image_channels'], output_channels=config['sino_channels']).to(settings['device'])
+        disc = Disc_S_90(config=config).to(settings['device'])
+        gen = Generator(config=config, gen_SI=False).to(settings['device'])
         gen_opt = torch.optim.Adam(gen.parameters(), lr=config['gen_lr'], betas=(config['gen_b1'], config['gen_b2']))
         disc_opt = torch.optim.Adam(disc.parameters(), lr=config['IS_disc_lr'], betas=(config['IS_disc_b1'], config['IS_disc_b2']))
-
+            
     ##############################
     ### Set Initial Conditions ###
     ##############################

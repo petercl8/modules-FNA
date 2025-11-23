@@ -9,11 +9,12 @@ class Disc_S_90(nn.Module):
     Through experimentation it has been found that sinogram discriminators work best with a fat network neck.
     This class takes as input a 90x90.
     '''
-    def __init__(self, config, disc_I=True, input_channels=3):
+    def __init__(self, config):
         super(Disc_S_90, self).__init__()
 
-        hidden_dim=config['IS_disc_hidden_dim']
-        patchGAN=config['IS_disc_patchGAN']
+        input_channels = config['sino_channels']
+        hidden_dim = config['IS_disc_hidden_dim']
+        patchGAN = config['IS_disc_patchGAN']
 
         ## Sequence 1 ##
         self.seq1 = nn.Sequential(
@@ -69,11 +70,16 @@ class Disc_S_90(nn.Module):
 ##############################
 
 class Disc_I_90(nn.Module):
-    def __init__(self, config, disc_I=True, input_channels=3):
+    '''
+    Image discriminator. Takes 90x90 images as input.
+    Automatically derives input_channels from config['image_channels'].
+    '''
+    def __init__(self, config):
         super(Disc_I_90, self).__init__()
 
-        hidden_dim=config['SI_disc_hidden_dim']
-        patchGAN=config['SI_disc_patchGAN']
+        input_channels = config['image_channels']
+        hidden_dim = config['SI_disc_hidden_dim']
+        patchGAN = config['SI_disc_patchGAN']
 
         ## Sequence 1 ##
         self.seq1 = nn.Sequential(
