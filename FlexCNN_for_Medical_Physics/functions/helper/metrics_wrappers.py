@@ -2,7 +2,7 @@ import torch
 import pandas as pd
 from .metrics import MSE, SSIM, custom_metric
 from .reconstruction_projection import reconstruct
-from .metrics import crop_image_tensor_by_factor
+from .cropping import crop_image_tensor_by_factor
 
 
 ##################################################
