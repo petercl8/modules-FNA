@@ -2,7 +2,7 @@
 
 This file lists prioritized, short actionable tasks to improve reproducibility, maintainability, and developer experience.
 
-Priority A — high (do these first)
+Priority A — Test the code in the cloud and on a local machine.
 - Add README.md
   - Purpose: short project description, quickstart, example commands.
   - Include: install (editable install), dataset format (shapes/dtypes/layout), minimal example run using a tiny/dummy dataset.
