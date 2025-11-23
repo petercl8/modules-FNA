@@ -15,7 +15,7 @@ from FlexCNN_for_Medical_Physics.functions.helper.metrics_wrappers import (
 )
 
 
-from FlexCNN_for_Medical_Physics.function.helper.mettrics_wrappers import (
+from FlexCNN_for_Medical_Physics.functions.helper.metrics_wrappers import (
     reconstruct_images_and_update_test_dataframe,
     update_tune_dataframe
 )
