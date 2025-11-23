@@ -15,12 +15,16 @@ from FlexCNN_for_Medical_Physics.functions.helper.metrics_wrappers import (
 )
 
 
+from FlexxCNN_for_Medical_Physics.function.helper.mettrics_wrappers import (
+    reconstruct_images_and_update_test_dataframe,
+    update_tune_dataframe
+)
+
+
 from FlexCNN_for_Medical_Physics.functions.helper.metrics import (
     SSIM,
     MSE,
     custom_metric,
-    reconstruct_images_and_update_test_dataframe,
-    update_tune_dataframe
 )
 from FlexCNN_for_Medical_Physics.functions.helper.reconstruction_projection import reconstruct
 from FlexCNN_for_Medical_Physics.functions.helper.display_images import (
