@@ -16,4 +16,3 @@ git commit -m "%msg%" 2>nul || echo No changes to commit.
 git push origin main
 
 echo Checkpoint changes pushed to GitHub.
-pause

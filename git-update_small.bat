@@ -11,4 +11,3 @@ if %errorlevel%==1 (
 git push origin main
 
 echo Update complete!
-pause
