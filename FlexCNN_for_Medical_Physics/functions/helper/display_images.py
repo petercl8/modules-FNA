@@ -80,7 +80,7 @@ def show_single_unmatched_tensor(image_tensor, grid=False, cmap='inferno', fig_s
     plt.show()
 
 
-def show_multiple_matched_tensors(*image_tensors, cmap='inferno', fig_size=1:
+def show_multiple_matched_tensors(*image_tensors, cmap='inferno', fig_size=1):
     '''
     Function for visualizing images from multiple tensors. Each image is "matched" with images from the other tensors,
     and each matched set of images (one from each tensor) is plotted with the same colormap in a column.
