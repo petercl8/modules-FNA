@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from torchvision.utils import make_grid
 from matplotlib.colors import Normalize
 
-def show_single_unmatched_tensor(image_tensor, grid=False, cmap='inferno', fig_size=25):
+def show_single_unmatched_tensor(image_tensor, grid=False, cmap='inferno', fig_size=10):
     '''
     Function for visualizing images. The images are displayed, each with their own colormap scaling, so quantitative comparisons are not possible.
     Send only the images you want plotted to this function. Works with both single channel and multi-channel images.
