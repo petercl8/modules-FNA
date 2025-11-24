@@ -24,9 +24,13 @@ if not exist "%DRIVE_DEST_PATH%\" (
 
 :: Copy the notebook
 echo Copying notebook to Google Drive folder...
-copy /Y "%SOURCE_NOTEBOOK%" "%DRIVE_DEST_PATH%\stitching_notebook.ipynb"
-echo Notebook copied successfully.
-echo.
+xcopy "%SOURCE_NOTEBOOK%" "%DRIVE_DEST_PATH%\stitching_notebook.ipynb" /Y /C
+if errorlevel 1 (
+    echo ERROR: Failed to copy notebook. Check permissions and that the file is not open.
+) else (
+    echo Notebook copied successfully.
+)
+
 
 :: Git operations
 git add -A
