@@ -9,16 +9,14 @@ def PlotFrame(paths, tune_exp_name, ax, x_ticks, x_label, y_ticks, y_label, xlim
     '''
     This function plots the dataframes for each tuning (experiment).
 
-    experiment_path:    path to the experiment file
+    tune_exp_name:      name of the tuning experiment
     ax:                 Matplotlib axis object to plot the dataframes
-    x_ticks:            x-axis label
-    x_label:            x-axis title
-    y_ticks:            y-axis label
-    y_label:            y-axis title
     xlim:               lower limit for the x-axis. Set to None to set no limit.
     ylim:               lower limit for the y-axis. Set to None to set no limit.
     logy:               use a logarithmic scale for the y-axis?
     max_plot_num        maximum number of dataframes to plot. Set to -1 to plot all dataframes.
+    fontsize:           font size for axis labels
+    ticksize:           font size for tick labels   
     '''
 
     experiment_path = os.path.join(paths['tune_storage_dirPath'], tune_exp_name)

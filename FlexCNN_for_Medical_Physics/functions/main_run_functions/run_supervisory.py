@@ -288,4 +288,4 @@ def run_SUP(config, paths, settings):
         torch.save({'epoch': epoch + 1, 'batch_step': batch_step, 'gen_state_dict': gen.state_dict(), 'gen_opt_state_dict': gen_opt.state_dict()}, checkpoint_path)
 
     if run_mode == 'test':
-        return test_dataframe
+        return test_dataframe# Verification edit: Copilot modified file on 2025-11-23
