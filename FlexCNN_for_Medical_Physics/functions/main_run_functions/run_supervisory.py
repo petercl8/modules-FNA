@@ -102,7 +102,6 @@ def run_SUP(config, paths, settings):
     # Data loader
     dataloader = DataLoader(
         NpArrayDataSet(image_path=paths['image_path'], sino_path=paths['sino_path'], config=config,
-                       image_size=image_size, image_channels=image_channels, sino_size=sino_size, sino_channels=sino_channels,
                        augment=augment, offset=offset, num_examples=num_examples, sample_division=sample_division),
         batch_size=batch_size,
         shuffle=shuffle
@@ -206,13 +205,14 @@ def run_SUP(config, paths, settings):
                 mean_CNN_CUSTOM += custom_metric(target, CNN_output) / display_step
                 _ = display_times('Custom metric time', time_init_custom, show_times)
 
+            # If Testing, we calculate and store reconstructions and metrics in a dataframe #
             if run_mode == 'test':
                 test_dataframe, mean_CNN_MSE, mean_CNN_SSIM, mean_FBP_MSE, mean_FBP_SSIM, mean_MLEM_MSE, mean_MLEM_SSIM, FBP_output, MLEM_output = \
-                    reconstruct_images_and_update_test_dataframe(input_, image_size, CNN_output, image_ground_scaled, test_dataframe, config)
+                    reconstruct_images_and_update_test_dataframe(input_, CNN_output, image_ground_scaled, test_dataframe, config, compute_MLEM=False)
 
             if run_mode == 'visualize':
-                FBP_output = reconstruct(input_, config, image_size=image_size, recon_type='FBP')
-                MLEM_output = reconstruct(input_, config, image_size=image_size, recon_type='MLEM')
+                FBP_output = reconstruct(input_, config['image_size'], config['SI_normalize'], config['SI_scale'], recon_type='FBP')
+                MLEM_output = reconstruct(input_, config['image_size'], config['SI_normalize'], config['SI_scale'], recon_type='MLEM')
 
             _ = display_times('metrics time', time_init_metrics, show_times)
 

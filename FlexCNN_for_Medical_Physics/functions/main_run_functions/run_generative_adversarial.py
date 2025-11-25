@@ -8,6 +8,8 @@ def run_GAN(config, paths, settings):
     """
     print('Training GAN only!!')
 
+    train_SI= config['train_SI']
+
     # Compute batch_size and display_step
     batch_size, display_step = compute_display_params(config, settings)
 

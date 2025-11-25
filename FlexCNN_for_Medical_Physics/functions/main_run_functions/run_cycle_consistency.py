@@ -13,6 +13,7 @@ def run_CYCLE(config, checkpoint_dirPath=None, load_state=False, save_state=Fals
     gen_b1 = config['gen_b1']
     gen_b2 = config['gen_b2']
     gen_lr = config['gen_lr']
+    train_SI = config['train_SI']
     scale=config['SI_scale'] if train_SI==True else config['IS_scale']
 
     ## Tensorboard ##
@@ -30,7 +31,8 @@ def run_CYCLE(config, checkpoint_dirPath=None, load_state=False, save_state=Fals
 
     ## Load Data ##
     dataloader = DataLoader(
-        NpArrayDataSet(image_path=image_path, sino_path=sino_path, config=config, resize_size=resize_size, image_channels=image_channels, sino_channels=sino_channels),
+        NpArrayDataSet(image_path=image_path, sino_path=sino_path, config=config,
+                       augment=augment, offset=offset, num_examples=num_examples, sample_division=sample_division),
         batch_size=batch_size,
         shuffle=shuffle
     )
@@ -210,7 +212,7 @@ def run_CYCLE(config, checkpoint_dirPath=None, load_state=False, save_state=Fals
                     print('Sinogram of Generated PET:')
                     show_single_unmatched_tensor(project(fake_I))
                     print('FBP, Low-Rez Sinograms:')
-                    show_single_unmatched_tensor(reconstruct(low_rez_S))
+                    show_single_unmatched_tensor(reconstruct(low_rez_S, config['sino_size'], config['IS_normalize'], config['IS_scale']))
                     '''
 
                     writer.add_scalar('mean adversarial loss', mean_adv_loss, batch_step)

@@ -50,7 +50,7 @@ def calculate_metric(batch_A, batch_B, img_metric_function, return_dataframe=Fal
         return metric_frame, metric_avg
 
 
-def reconstruct_images_and_update_test_dataframe(sino_tensor, image_size, CNN_output, ground_image, test_dataframe, config,compute_MLEM=False):
+def reconstruct_images_and_update_test_dataframe(sino_tensor, CNN_output, ground_image, test_dataframe, config, compute_MLEM=False):
     '''
     Function which: A) performs reconstructions (FBP and possibly ML-EM)
                     B) constructs a dataframe of metric values (MSE & SSIM) for these reconstructions, and also for the CNN output, with respect to the ground truth image.
@@ -58,19 +58,19 @@ def reconstruct_images_and_update_test_dataframe(sino_tensor, image_size, CNN_ou
                     D) returns the concatenated dataframe, mean metric values, and reconstructions
 
     sino_tensor:    sinogram tensor of shape [num, chan, height, width]
-    image_size:     image_size
     CNN_output:     CNN reconstructions
     ground_image:   ground truth images
     test_dataframe: dataframe to append metric values to
-    config:         general config dictionary
+    config:         configuration dictionary containing image_size, SI_normalize, SI_scale
+    compute_MLEM:   whether to compute ML-EM reconstructions (can be slow)
 
-    Note: MSE and SSIM are calculated using the metrics.py file, which are definted below in this module.
+    Note: MSE and SSIM are calculated using the metrics.py file, which are defined below in this module.
     '''
 
     # Construct Outputs #
-    FBP_output = reconstruct(sino_tensor, config, image_size=image_size, recon_type='FBP')
+    FBP_output = reconstruct(sino_tensor, config['image_size'], config['SI_normalize'], config['SI_scale'], recon_type='FBP')
     if compute_MLEM==True:
-        MLEM_output = reconstruct(sino_tensor, config, image_size=image_size, recon_type='MLEM')
+        MLEM_output = reconstruct(sino_tensor, config['image_size'], config['SI_normalize'], config['SI_scale'], recon_type='MLEM')
     else: # If not looking at ML-EM, don't waste time computing the MLEM images, which can take awhile.
         MLEM_output = FBP_output
 

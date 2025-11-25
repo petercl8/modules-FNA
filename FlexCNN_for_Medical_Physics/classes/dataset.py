@@ -6,7 +6,7 @@ import numpy as np
 
 resize_warned = False  # Module-level flag to ensure warning is printed only once
 
-def NpArrayDataLoader(image_array, sino_array, config, image_size = 90, sino_size=90, image_channels=1, sino_channels=1, augment=False, index=0, network_type='SUP', train_SI=True, device='cuda'):
+def NpArrayDataLoader(image_array, sino_array, config, augment=False, index=0, device='cuda'):
     global resize_warned
 
     '''
@@ -15,14 +15,21 @@ def NpArrayDataLoader(image_array, sino_array, config, image_size = 90, sino_siz
 
     image_array:    image numpy array
     sino_array:     sinogram numpy array
-    config:         configuration dictionary with hyperparameters
-    image_size:     shape to resize image to (for output)
-    image_channels: number of channels for output images
-    sino_size:      shape to resize sinograms to (for output)
-    sino_channels:  number of channels in output sinograms
+    config:         configuration dictionary with hyperparameters. Must contain: network_type, train_SI, image_size, 
+                    sino_size, image_channels, sino_channels, SI_normalize, SI_scale, and (for non-SUP/GAN networks) 
+                    IS_normalize, IS_scale.
     augment:        perform data augmentation?
     index:          index of the image/sinogram pair to grab
+    device:         device to place tensors on ('cuda' or 'cpu')
     '''
+    ## Extract parameters from config ##
+    network_type = config['network_type']
+    train_SI = config['train_SI']
+    image_size = config['image_size']
+    sino_size = config['sino_size']
+    image_channels = config['image_channels']
+    sino_channels = config['sino_channels']
+    
     ## Set Normalization Variables ##
     if (network_type=='GAN') or (network_type=='SUP'):
         if train_SI==True:
@@ -163,22 +170,20 @@ def NpArrayDataLoader(image_array, sino_array, config, image_size = 90, sino_siz
     # Returns both original and altered sinograms and images, assigned to CPU or GPU
     return sinogram_multChannel.to(device), IS_scale*sino_out.to(device), image_multChannel.to(device), SI_scale*image_out.to(device)
 
+
 class NpArrayDataSet(Dataset):
     '''
     Class for loading data from .np files, given file directory strings and set of optional transformations.
     In the dataset used in our first two conference papers, the data repeat every 17500 steps but with different augmentations.
     For the dataset with FORE rebinning, the dataset contains no augmented examples; all augmentation is performed on the fly.
     '''
-    def __init__(self, image_path, sino_path, config, image_size = 90, sino_size=90, image_channels=1, sino_channels=1,
-                 augment=False, offset=0, num_examples=-1, sample_division=1):
+    def __init__(self, image_path, sino_path, config, augment=False, offset=0, num_examples=-1, sample_division=1):
         '''
         image_path:         path to images in data set
         sino_path:          path to sinograms in data set
-        config:             configuration dictionary with hyperparameters
-        image_size:         shape to resize image to (for output)
-        image_channels:     number of channels in images
-        sino_size:          shape to resize sinograms to (for output)
-        sino_channels:      number of channels in sinograms (for photopeak sinograms, this is 1)
+        config:             configuration dictionary with hyperparameters. Must contain: image_size, sino_size, 
+                            image_channels, sino_channels, network_type, train_SI, SI_normalize, SI_scale, 
+                            and (for non-SUP/GAN networks) IS_normalize, IS_scale.
         augment:            Set True to perform on-the-fly augmentation of data set. Set False to not perform augmentation.
         offset:             To begin dataset at beginning of the datafile, set offset=0. To begin on the second image, offset = 1, etc.
         num_examples:       Max number of examples to load into dataset. Set to -1 to load the maximum number from the numpy array.
@@ -198,10 +203,6 @@ class NpArrayDataSet(Dataset):
             self.sino_array = sino_array[offset : offset + num_examples, :]
 
         self.config = config
-        self.image_size = image_size
-        self.sino_size = sino_size
-        self.image_channels = image_channels
-        self.sino_channels = sino_channels
         self.augment = augment
         self.sample_division = sample_division
 
@@ -213,9 +214,8 @@ class NpArrayDataSet(Dataset):
 
         idx = idx*self.sample_division
 
-        sino_ground, sino_ground_scaled, image_ground, image_ground_scaled = NpArrayDataLoader(self.image_array, self.sino_array, self.config, self.image_size,
-                                                                                self.sino_size, self.image_channels, self.sino_channels,
-                                                                                augment=self.augment, index=idx)
+        sino_ground, sino_ground_scaled, image_ground, image_ground_scaled = NpArrayDataLoader(self.image_array, self.sino_array, self.config,
+                                                                                augment=self.augment, index=idx, device='cuda')
 
         return sino_ground, sino_ground_scaled, image_ground, image_ground_scaled
         # Returns both original, as well as altered, sinograms and images
