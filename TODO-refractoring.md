@@ -1,5 +1,9 @@
 ﻿# Project TODO — FlexCNN_for_Medical_Physics
 
+Next Plan:
+For our next plan, I would like to move some functions out of the jupyter notebook #file:stitching_notebook.ipynb  and into regular python files. I would like to move the following functions: BuildImageSinoTensors(), CNN_reconstruct(), plot_hist_1D(), plot_hist_2D(), and sort_DataSet(), BuildImageSinoTensors() and CNN_reconstruct() can be moved into #file:plot_recons.py , plot_hist1D() and plot_hist_2D() can be moved into #file:plot_histograms.phy , and sort_DataSet() can be moved into #file:sort_dataset.py . When these functions are moved, they may lose access to global variables in the jupyter notebook. Therefore, please look through the functions, update the signatures, and also update the function calls in the notebook. Then, fill in the appropriate imports at the top of each module.
+
+
 This file lists prioritized, short actionable tasks to improve reproducibility, maintainability, and developer experience.
 
 Priority A — Test the code in the cloud and on a local machine.
