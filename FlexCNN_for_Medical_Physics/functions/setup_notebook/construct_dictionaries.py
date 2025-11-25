@@ -1,5 +1,88 @@
 import os
 
+def construct_config(
+    run_mode,
+    network_opts,
+    test_opts,
+    viz_opts,
+    config_SUP_SI=None,
+    config_SUP_IS=None,
+    config_GAN_SI=None,
+    config_GAN_IS=None,
+    config_CYCLEGAN=None,
+    config_CYCLESUP=None,
+    config_RAY_SI=None,
+    config_RAY_IS=None,
+    config_RAY_SUP=None,
+    config_RAY_GAN=None,
+    config_SUP_RAY_cycle=None,
+    config_GAN_RAY_cycle=None):
+
+    """
+    Combines configuration dictionaries based on run_mode, network_type, and train_SI.
+    
+    Args:
+        run_mode: 'tune', 'train', 'test', or 'visualize'
+        network_opts: dict with keys: network_type, train_SI, image_size, sino_size, image_channels, sino_channels
+        test_opts: dict with keys: test_batch_size, etc.
+        viz_opts: dict with keys: visualize_batch_size, etc.
+        config_SUP_SI, config_SUP_IS, etc.: Network configuration dictionaries
+    
+    Returns:
+        config dict with all network hyperparameters and data dimensions
+    """
+    
+    # Extract network options
+    network_type = str(network_opts['network_type']).upper()  # Normalize strings
+    train_SI = network_opts['train_SI']
+    image_size = network_opts['image_size']
+    sino_size = network_opts['sino_size']
+    image_channels = network_opts['image_channels']
+    sino_channels = network_opts['sino_channels']
+
+    # Combine dictionaries based on run_mode and network_type
+    if run_mode in ['train', 'test', 'visualize']:
+        if network_type == 'SUP':
+            config = config_SUP_SI if train_SI else config_SUP_IS
+        elif network_type == 'GAN':
+            config = config_GAN_SI if train_SI else config_GAN_IS
+        elif network_type == 'CYCLEGAN':
+            config = config_CYCLEGAN
+        elif network_type == 'CYCLESUP':
+            config = config_CYCLESUP
+        else:
+            raise ValueError(f"Unknown network_type '{network_type}'.")
+
+    elif run_mode == 'tune':
+        if network_type == 'SUP':
+            config = {**(config_RAY_SI if train_SI else config_RAY_IS), **config_RAY_SUP}
+        elif network_type == 'GAN':
+            config = {**(config_RAY_SI if train_SI else config_RAY_IS), **config_RAY_GAN}
+        elif network_type == 'CYCLESUP':
+            config = {**config_SUP_SI, **config_SUP_IS, **config_SUP_RAY_cycle}
+        elif network_type == 'CYCLEGAN':
+            config = {**config_GAN_SI, **config_GAN_IS, **config_GAN_RAY_cycle}
+        else:
+            raise ValueError(f"Unknown network_type '{network_type}'.")
+        
+        # Add data dimensions to config. These are set by the user and not tuned.
+        config['network_type'] = network_type # If config is being built from smaller configs (CYCLESUP, CYCLEGAN), then this overwrites any existing value.
+        config['train_SI'] = train_SI # Only used for SUP and GAN networks but added here for consistency.
+        config['image_size'] = image_size
+        config['sino_size'] = sino_size
+        config['image_channels'] = image_channels
+        config['sino_channels'] = sino_channels
+    else:
+        raise ValueError(f"Unknown run_mode '{run_mode}'.")
+
+    # Override batch size for test or visualize modes. Otherwise, when testing or visualizing, the batch size from training/tuning would be used.
+    if run_mode == 'test':
+        config['batch_size'] = test_opts['test_batch_size']
+    elif run_mode == 'visualize':
+        config['batch_size'] = viz_opts['visualize_batch_size']
+
+    return config
+
 
 def setup_paths(run_mode, base_dirs, data_files, mode_files, test_ops, viz_ops):
     """
@@ -165,86 +248,3 @@ def setup_settings( run_mode, common_settings, tune_opts, train_opts, test_opts,
         raise ValueError(f"Unknown run_mode: {run_mode}")
     
     return settings
-
-
-def construct_config(
-    run_mode,
-    network_opts,
-    test_opts,
-    viz_opts,
-    config_SUP_SI=None,
-    config_SUP_IS=None,
-    config_GAN_SI=None,
-    config_GAN_IS=None,
-    config_CYCLEGAN=None,
-    config_CYCLESUP=None,
-    config_RAY_SI=None,
-    config_RAY_IS=None,
-    config_RAY_SUP=None,
-    config_RAY_GAN=None,
-    config_SUP_RAY_cycle=None,
-    config_GAN_RAY_cycle=None):
-
-    """
-    Combines configuration dictionaries based on run_mode, network_type, and train_SI.
-    
-    Args:
-        run_mode: 'tune', 'train', 'test', or 'visualize'
-        network_opts: dict with keys: network_type, train_SI, image_size, sino_size, image_channels, sino_channels
-        test_opts: dict with keys: test_batch_size, etc.
-        viz_opts: dict with keys: visualize_batch_size, etc.
-        config_SUP_SI, config_SUP_IS, etc.: Network configuration dictionaries
-    
-    Returns:
-        config dict with all network hyperparameters and data dimensions
-    """
-    
-    # Extract network options
-    network_type = str(network_opts['network_type']).upper()  # Normalize strings
-    train_SI = network_opts['train_SI']
-    image_size = network_opts['image_size']
-    sino_size = network_opts['sino_size']
-    image_channels = network_opts['image_channels']
-    sino_channels = network_opts['sino_channels']
-
-    # Combine dictionaries based on run_mode and network_type
-    if run_mode in ['train', 'test', 'visualize']:
-        if network_type == 'SUP':
-            config = config_SUP_SI if train_SI else config_SUP_IS
-        elif network_type == 'GAN':
-            config = config_GAN_SI if train_SI else config_GAN_IS
-        elif network_type == 'CYCLEGAN':
-            config = config_CYCLEGAN
-        elif network_type == 'CYCLESUP':
-            config = config_CYCLESUP
-        else:
-            raise ValueError(f"Unknown network_type '{network_type}'.")
-
-    elif run_mode == 'tune':
-        if network_type == 'SUP':
-            config = {**(config_RAY_SI if train_SI else config_RAY_IS), **config_RAY_SUP}
-        elif network_type == 'GAN':
-            config = {**(config_RAY_SI if train_SI else config_RAY_IS), **config_RAY_GAN}
-        elif network_type == 'CYCLESUP':
-            config = {**config_SUP_SI, **config_SUP_IS, **config_SUP_RAY_cycle}
-        elif network_type == 'CYCLEGAN':
-            config = {**config_GAN_SI, **config_GAN_IS, **config_GAN_RAY_cycle}
-        else:
-            raise ValueError(f"Unknown network_type '{network_type}'.")
-    else:
-        raise ValueError(f"Unknown run_mode '{run_mode}'.")
-
-    # Add data dimensions to config
-    config['image_size'] = image_size
-    config['sino_size'] = sino_size
-    config['image_channels'] = image_channels
-    config['sino_channels'] = sino_channels
-    config['train_SI'] = train_SI
-
-    # Override batch size for test or visualize modes. Otherwise, when testing or visualizing, the batch size from training/tuning would be used.
-    if run_mode == 'test':
-        config['batch_size'] = test_opts['test_batch_size']
-    elif run_mode == 'visualize':
-        config['batch_size'] = viz_opts['visualize_batch_size']
-
-    return config

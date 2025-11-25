@@ -28,8 +28,8 @@ def NpArrayDataLoader(image_array, sino_array, config, image_size = 90, sino_siz
         if train_SI==True:
             SI_normalize=config['SI_normalize']
             SI_scale=config['SI_scale']
-            IS_normalize=False     # If the Sinogram-->Image network (SI) is being trained, don't waste time normalizing sinograms
-            IS_scale=1             # If the Sinogram-->Image network (SI) is being trained, don't waste time scaling sinograms
+            IS_normalize=False     # If the Sinogram-->Image network (SI) is being trained, IS normalization is not in the config dict.
+            IS_scale=1             # If the Sinogram-->Image network (SI) is being trained, IS scaling is not in the config dict.
         else:
             IS_normalize=config['IS_normalize']
             IS_scale=config['IS_scale']
@@ -106,6 +106,10 @@ def NpArrayDataLoader(image_array, sino_array, config, image_size = 90, sino_siz
         sinogram_multChannel = torch.flip(sinogram_multChannel, dims=(2,)) # Flip sinogram horizontally
         return image_multChannel, sinogram_multChannel
 
+    def ChannelFlip(image_multChannel, sinogram_multChannel):
+        sinogram_multChannel = torch.flip(sinogram_multChannel, dims=(0,)) # Flip sinogram channels about center channel
+        return image_multChannel, sinogram_multChannel
+
     ## Select Data, Convert to Pytorch Tensors ##
     image_multChannel = torch.from_numpy(image_array[index,:]) # image_multChannel.shape = (C, X, Y)
     sinogram_multChannel = torch.from_numpy(sino_array[index,:]) # sinogram_multChannel.shape = (C, X, Y)
@@ -117,6 +121,9 @@ def NpArrayDataLoader(image_array, sino_array, config, image_size = 90, sino_siz
             image_multChannel, sinogram_multChannel = VerticalFlip(image_multChannel, sinogram_multChannel)
         if np.random.choice([True, False]): # Half of the time, flips the image horizontally
             image_multChannel, sinogram_multChannel = HorizontalFlip(image_multChannel, sinogram_multChannel)
+        if np.random.choice([True, False]): # Half of the time, flips the sinogram channels about the center channel
+            image_multChannel, sinogram_multChannel = ChannelFlip(image_multChannel, sinogram_multChannel)
+
 
     ## Create A Set of Resized Outputs ##
     orig_image_h, orig_image_w = image_multChannel.shape[1:]

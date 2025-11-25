@@ -11,10 +11,11 @@ from ray import tune
 # for notes on momentum, see: https://distill.pub/2017/momentum/
 
 config_RAY_SI = { # Dictionary for Generator: Sinogram-->Image
-    # Data Loading
-    'SI_normalize': tune.choice([True, False]),                 # Normalize dataloader outputs and outputs of generator?
-                                                                # If so, the pixel values in the image all add up to 1.
-    'SI_scale': 90*90,                                          # If normalizing the pixel images, multiply images by this value.
+    ## Data Loading ##
+    #'SI_normalize': tune.choice([True, False]),                # Normalize dataloader outputs and outputs of generator? If so, the pixel values 
+                                                                # in the image all add up to 1. Only normalize if you don't care about quantitative reconstructions.
+    'SI_normalize': False,  
+    'SI_scale': 90*90,                                          # If normalizing the pixel images, multiply images by this value. Otherwise, this is not used.
                                                                 # The pixel values will then add up to this number.
     # Generator Network
     'SI_gen_mult': tune.uniform(1.1, 4),                        # Factor by which to multiply channels/block as one moves twowards the center of the network
@@ -39,7 +40,7 @@ config_RAY_SI = { # Dictionary for Generator: Sinogram-->Image
     }
 
 config_RAY_IS = { # Dictionary for Generator: Image-->Sinogram
-    # Data Loading
+    ## Data Loading ##
     'IS_normalize': False, # tune.choice([True, False]), # Normalize outputs or not
     'IS_scale': 90*90,
     # Generator Network
