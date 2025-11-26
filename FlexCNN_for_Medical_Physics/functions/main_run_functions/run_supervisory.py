@@ -107,6 +107,18 @@ def run_SUP(config, paths, settings):
         shuffle=shuffle
     )
 
+    # Heartbeat report to Ray Tune.
+    if run_mode == 'tune' and session is not None:
+        # Immediate heartbeat so the trial shows as RUNNING and reporter columns exist
+        session.report({
+            'MSE': 0.0,
+            'SSIM': 0.0,
+            'CUSTOM': 0.0,
+            'example_num': 0,
+            'batch_step': 0,
+            'epoch': 0
+        })
+
     # Checkpoint handling
     if load_state:
         checkpoint = torch.load(checkpoint_path)
@@ -222,7 +234,7 @@ def run_SUP(config, paths, settings):
                 example_num = batch_step * batch_size
 
                 if run_mode == 'tune' and session is not None:
-                    session.report({'MSE': mean_CNN_MSE, 'SSIM': mean_CNN_SSIM, 'CUSTOM': mean_CNN_CUSTOM, 'example_number': example_num, 'batch_step': batch_step, 'epoch': epoch})
+                    session.report({'MSE': mean_CNN_MSE, 'SSIM': mean_CNN_SSIM, 'CUSTOM': mean_CNN_CUSTOM, 'example_num': example_num, 'batch_step': batch_step, 'epoch': epoch})
 
                     if int(tune_dataframe_fraction * tune_max_t) == report_num:
                         tune_dataframe = update_tune_dataframe(tune_dataframe, tune_dataframe_path, gen, config, mean_CNN_MSE, mean_CNN_SSIM, mean_CNN_CUSTOM)

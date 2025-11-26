@@ -51,6 +51,12 @@ def tune_networks(config, paths, settings, tune_opts, base_dirs, trainable='SUP'
     num_CPUs = tune_opts.get('num_CPUs', 1)
     num_GPUs = tune_opts.get('num_GPUs', 0)
 
+    print('RESOURCES')
+    print('num_CPUs:', num_CPUs)
+    print('num_GPUs:', num_GPUs)
+    print('device:', settings['device'])
+
+
     # Initialize Ray to advertise available resources
     ray.init(ignore_reinit_error=True, num_cpus=num_CPUs, num_gpus=num_GPUs)
     os.environ.pop("AIR_VERBOSITY", None)
