@@ -38,8 +38,9 @@ config_SUP_SI = {
   "sino_channels": 3,
   "image_channels":1,
   "image_size":90,
-  "train_SI": True
-}
+  "train_SI": True,
+  "network_type": "SUP"
+  }
 
 '''
 # 3x90x90 --> 1x90x90, Tuned for SSIM 
@@ -65,7 +66,8 @@ config_SUP_SI = {
   "sino_channels": 3,
   "image_channels":1,
   "image_size":90,
-  "train_SI": True
+  "train_SI": True, 
+  "network_type": "SUP"
 }
 '''
 
