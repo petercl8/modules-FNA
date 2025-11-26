@@ -6,107 +6,87 @@ from FlexCNN_for_Medical_Physics.classes.dataset import NpArrayDataLoader
 from FlexCNN_for_Medical_Physics.classes.generators import Generator
 
 
-def BuildImageSinoTensors(image_array, sino_array, config, indexes, device):
-    """
-    Build image and sinogram torch tensors (channel-first) from numpy arrays using selected indexes.
+def BuildImageSinoTensors(image_array_names, sino_array_name, config, paths_dict, indexes, device):
 
-    Parameters
-    ----------
-    image_array : np.ndarray
-        Shape (N, H, W) or (N, C, H, W). Will be interpreted channel-first.
-    sino_array : np.ndarray
-        Shape (N, H, W) or (N, C, H, W) matching image index dimension.
-    config : dict
-        Must contain at least: 'train_SI', 'SI_scale', 'IS_scale', 'SI_normalize', 'IS_normalize',
-        'image_size', 'sino_size', 'image_channels', 'sino_channels'.
-    indexes : Sequence[int]
-        List/iterable of integer indices to extract.
-    device : torch.device or str
-        Device to allocate output tensors and place loaded samples.
+    # --- Normalize input so we always have a list of image array names ---
+    if isinstance(image_array_names, str):
+        image_array_names = [image_array_names]
 
-    Returns
-    -------
-    image_tensor : torch.Tensor
-        Float32 tensor of shape (len(indexes), C_img, H, W).
-    sino_tensor : torch.Tensor
-        Float32 tensor of shape (len(indexes), C_sino, H, W).
+    # --- Load the sinogram array (only one) ---
+    sino_array_path = os.path.join(paths_dict['data_dirPath'], sino_array_name)
+    sino_array = np.load(sino_array_path, mmap_mode='r')
 
-    Notes
-    -----
-    - All outputs are torch.float32.
-    - Assumes NpArrayDataLoader already performs any resizing/normalization based on config.
-    - Index errors will raise naturally if an index is out of bounds.
-    """
-    first = True
-    i = 0
-    for idx in indexes:
-        # augment=False for deterministic extraction
-        sino_ground, sino_ground_scaled, image_ground, image_ground_scaled = NpArrayDataLoader(
-            image_array, sino_array, config, augment=False, index=idx, device=device
-        )
+    # --- Load each image array into memory-mapped numpy objects ---
+    image_arrays = []
+    for name in image_array_names:
+        path = os.path.join(paths_dict['data_dirPath'], name)
+        image_arrays.append(np.load(path, mmap_mode='r'))
 
-        if first:
-            image_tensor = torch.zeros(
-                len(indexes),
-                image_ground_scaled.shape[0],
-                image_ground_scaled.shape[1],
-                image_ground_scaled.shape[2],
-                dtype=torch.float32,
-                device=device
+    # --- Prepare empty lists to collect image tensors ---
+    image_tensors = []
+    sino_tensor = None
+    first_sino = True
+
+    # --- Loop over each image array separately ---
+    for array_num, image_array in enumerate(image_arrays):
+
+        # Build tensors for this image array
+        i = 0
+        for idx in indexes:
+            sino_ground, sino_ground_scaled, image_ground, image_ground_scaled = NpArrayDataLoader(
+                image_array, sino_array, config, augment=False, index=idx, device=device
             )
-            sino_tensor = torch.zeros(
-                len(indexes),
-                sino_ground_scaled.shape[0],
-                sino_ground_scaled.shape[1],
-                sino_ground_scaled.shape[2],
-                dtype=torch.float32,
-                device=device
-            )
-            first = False
 
-        image_tensor[i, :] = image_ground_scaled
-        sino_tensor[i, :] = sino_ground_scaled
-        i += 1
+            if first_sino:
+                # create the sino tensor only once
+                sino_tensor = torch.zeros(
+                    len(indexes),
+                    sino_ground_scaled.shape[0],
+                    sino_ground_scaled.shape[1],
+                    sino_ground_scaled.shape[2],
+                    dtype=torch.float32,
+                    device=device
+                )
+                first_sino=False
 
-    return image_tensor, sino_tensor
+            # create a fresh image tensor for *this* image array
+            if i == 0:
+                image_tensor = torch.zeros(
+                    len(indexes),
+                    image_ground_scaled.shape[0],
+                    image_ground_scaled.shape[1],
+                    image_ground_scaled.shape[2],
+                    dtype=torch.float32,
+                    device=device
+                )
 
+            image_tensor[i, :] = image_ground_scaled
 
-def CNN_reconstruct(sino_tensor, config, checkpoint_path, device):
-    """
-    Run a trained CNN generator to reconstruct images from a sinogram tensor.
+            if array_num==0:
+                sino_tensor[i, :] = sino_ground_scaled
 
-    Parameters
-    ----------
-    sino_tensor : torch.Tensor
-        Shape (N, C_sino, H, W), float32, already on desired device.
-    config : dict
-        Must include generator architecture keys and:
-        'image_size', 'sino_size', 'sino_channels', 'image_channels',
-        normalization/scale keys: 'SI_normalize', 'SI_scale' (if supervisory / SI path).
-    checkpoint_path : str
-        Full path to a saved checkpoint file containing 'gen_state_dict'.
-    device : torch.device or str
-        Device on which to place the model before inference.
+            i += 1
 
-    Returns
-    -------
-    recon_tensor : torch.Tensor
-        Reconstructed images, shape (N, C_img, H, W), float32, detached.
+        image_tensors.append(image_tensor)
+        first = False  # only create sino_tensor on first pass
 
-    Notes
-    -----
-    - Expects checkpoint to contain 'gen_state_dict'.
-    - Inference is performed under torch.no_grad().
-    - Any mismatch between checkpoint weights and current config will raise an error.
-    """
+    return image_tensors, sino_tensor
+
+def CNN_reconstruct(sino_tensor, config, checkpoint_name, paths, device):
+    checkpoint_path = os.path.join(paths['checkpoint_dirPath'], checkpoint_name)
     gen = Generator(config=config, gen_SI=True).to(device)
     checkpoint = torch.load(checkpoint_path, map_location=device)
     gen.load_state_dict(checkpoint['gen_state_dict'])
     gen.eval()
     with torch.no_grad():
         return gen(sino_tensor).detach()
-    
 
+def PlotPhantomRecons(image_array_names, sino_array_name, config, paths_dict, indexes, checkpointName, fig_size, device):
+    image_tensors, sino_tensor = BuildImageSinoTensors(image_array_names, sino_array_name, config, paths_dict, indexes, device)
+    CNN_output = CNN_reconstruct(sino_tensor, config, checkpointName, paths_dict, device)
+    show_multiple_unmatched_tensors(*image_tensors, CNN_output, fig_size=fig_size)
+
+    return image_tensors, sino_tensor
 '''
 OLDER VERSION BELOW - TO BE DEPRECATED
 
