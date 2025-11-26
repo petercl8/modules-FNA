@@ -79,6 +79,76 @@ def show_single_unmatched_tensor(image_tensor, grid=False, cmap='inferno', fig_s
 
     plt.show()
 
+def show_multiple_unmatched_tensors(*image_tensors, cmap='inferno', fig_size=1.5):
+    """
+    Like show_multiple_matched_tensors, but each image gets its own normalization.
+    No matching of min/max across tensors.
+    """
+
+    # Print stats for each tensor
+    for tensor in image_tensors:
+        print(f'Shape: {tensor.shape} // Min: {torch.min(tensor)} // Max: {torch.max(tensor)} '
+              f'// Mean: {torch.mean(tensor)} // Mean Sum (per image): {torch.sum(tensor).item()/(tensor.shape[0]*tensor.shape[1])} '
+              f'// Sum (a single image): {torch.sum(tensor[0,0,:])}')
+
+    combined_tensor = torch.cat(image_tensors, dim=0).detach().cpu()
+    combined_tensor = torch.clamp(combined_tensor, min=0)
+
+    num_rows = len(image_tensors)
+    num_cols = len(image_tensors[0])
+    num_chan = image_tensors[0].size(dim=1)
+
+    # -----------------------------
+    # 1-CHANNEL IMAGES
+    # -----------------------------
+    if num_chan == 1:
+        fig, ax = plt.subplots(num_rows, num_cols, squeeze=False,
+                               figsize=(fig_size*num_cols, fig_size*num_rows),
+                               constrained_layout=True)
+
+        for row in range(num_rows):
+            for col in range(num_cols):
+                img = combined_tensor[row*num_cols + col, 0, :, :]
+                img_min = torch.min(img).item()
+                img_max = torch.max(img).item()
+                norm = Normalize(vmin=img_min, vmax=img_max)
+
+                ax[row, col].axis('off')
+                ax[row, col].imshow(img.squeeze(), cmap=cmap, norm=norm)
+
+    # -----------------------------
+    # MULTI-CHANNEL IMAGES
+    # -----------------------------
+    else:
+        print(f'Mean (Ch 0): {torch.mean(combined_tensor[:,0,:,:])} // '
+              f'Mean (Ch 1): {torch.mean(combined_tensor[:,1,:,:])} // '
+              f'Mean (Ch 2): {torch.mean(combined_tensor[:,2,:,:])}')
+
+        # Layout: For each image, each channel + a blank divider
+        fig, ax = plt.subplots(num_rows, num_cols*(num_chan+1), squeeze=False,
+                               figsize=(fig_size*num_cols*(num_chan+1), fig_size*num_rows),
+                               constrained_layout=True)
+
+        i = 0
+        for col in range(num_cols):    
+            for chan in range(num_chan):
+                for row in range(num_rows):
+                    img = combined_tensor[row*num_cols + col, chan, :, :]
+                    img_min = torch.min(img).item()
+                    img_max = torch.max(img).item()
+                    norm = Normalize(vmin=img_min, vmax=img_max)
+
+                    ax[row, i].axis('off')
+                    ax[row, i].imshow(img.squeeze(), cmap=cmap, norm=norm)
+                i += 1
+
+            # Divider before next multichannel image
+            for row in range(num_rows):
+                ax[row, i].axis('off')
+                ax[row, i].imshow(torch.ones_like(img), cmap='gray')
+            i += 1
+
+    plt.show()
 
 def show_multiple_matched_tensors(*image_tensors, cmap='inferno', fig_size=1.5):
     '''
