@@ -2,7 +2,7 @@ import os
 
 from ray import air, tune
 import ray.train as train
-from ray.tune import CLIReporter
+from ray.tune import CLIReporter, JupyterNotebookReporter
 from ray.tune.schedulers import ASHAScheduler, FIFOScheduler
 from ray.tune.search.hyperopt import HyperOptSearch
 from ray.tune.result_grid import ResultGrid
