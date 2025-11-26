@@ -1,5 +1,6 @@
 import os
 
+import ray
 from ray import air, tune
 import ray.train as train
 from ray.tune import CLIReporter, JupyterNotebookReporter
@@ -49,6 +50,10 @@ def tune_networks(config, paths, settings, tune_opts, base_dirs, trainable='SUP'
     grace_period = tune_opts.get('grace_period', 1)
     num_CPUs = tune_opts.get('num_CPUs', 1)
     num_GPUs = tune_opts.get('num_GPUs', 0)
+
+    # Initialize Ray to advertise available resources
+    ray.init(ignore_reinit_error=True, num_cpus=num_CPUs, num_gpus=num_GPUs)
+    os.environ.pop("AIR_VERBOSITY", None)
 
     # Extract tune_storage_dirPath directly from paths
     tune_storage_dirPath = paths['tune_storage_dirPath']
@@ -140,22 +145,15 @@ def tune_networks(config, paths, settings, tune_opts, base_dirs, trainable='SUP'
                                                                     # But then the search space needs to be defined in terms of the specific search algorithm methods, rather than letting RayTune translate.
 
     ## Which trainable do you want to use? ##
-    # Lambda wraps the trainable to "freeze" paths and settings while Ray Tune passes the trial config
     if trainable == 'SUP':
-        trainable_with_resources = tune.with_resources(
-            lambda trial_config: run_SUP(trial_config, paths, settings),
-            {"CPU": num_CPUs, "GPU": num_GPUs}
-        )  # train_Supervisory_Sym is a function of the config dictionary, but we don't state that explicitly.
+        trainable_param = tune.with_parameters(run_SUP, paths=paths, settings=settings)
+        trainable_with_resources = tune.with_resources(trainable_param, {"CPU": num_CPUs, "GPU": num_GPUs})
     elif trainable == 'GAN':
-        trainable_with_resources = tune.with_resources(
-            lambda trial_config: run_GAN(trial_config, paths, settings),
-            {"CPU": num_CPUs, "GPU": num_GPUs}
-        )
+        trainable_param = tune.with_parameters(run_GAN, paths=paths, settings=settings)
+        trainable_with_resources = tune.with_resources(trainable_param, {"CPU": num_CPUs, "GPU": num_GPUs})
     elif trainable == 'CYCLE':
-        trainable_with_resources = tune.with_resources(
-            lambda trial_config: run_CYCLE(trial_config, paths, settings),
-            {"CPU": num_CPUs, "GPU": num_GPUs}
-        )
+        trainable_param = tune.with_parameters(run_CYCLE, paths=paths, settings=settings)
+        trainable_with_resources = tune.with_resources(trainable_param, {"CPU": num_CPUs, "GPU": num_GPUs})
     else:
         raise ValueError(f"Unsupported trainable='{trainable}'. Expected 'SUP', 'GAN', or 'CYCLE'.")
 
@@ -171,6 +169,7 @@ def tune_networks(config, paths, settings, tune_opts, base_dirs, trainable='SUP'
                 time_budget_s=tune_minutes * 60,  # time_budget is in seconds
                 scheduler=scheduler,
                 search_alg=search_alg,
+                max_concurrent_trials=1
             ),
             run_config=run_config
         )
@@ -186,7 +185,6 @@ def tune_networks(config, paths, settings, tune_opts, base_dirs, trainable='SUP'
 
     result_grid: ResultGrid = tuner.fit()
     return result_grid
-
 
 def tune_networks_old(tune_max_t=40, trainable='SUP', grace_period=1):
     '''
