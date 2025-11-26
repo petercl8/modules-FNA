@@ -14,7 +14,7 @@ from FlexCNN_for_Medical_Physics.functions.main_run_functions.run_cycle_consiste
 
 
 def tune_exp():
-    print("This is a placeholder function for tuning experiments.")
+    print("placeholder")
 
 def tune_networks(config, paths, settings, tune_opts, base_dirs, trainable='SUP'):
     """
