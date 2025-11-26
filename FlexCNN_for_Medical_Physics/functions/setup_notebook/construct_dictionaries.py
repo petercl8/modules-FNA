@@ -41,7 +41,7 @@ def construct_config(
     sino_channels = network_opts['sino_channels']
 
     # Combine dictionaries based on run_mode and network_type
-    if run_mode in ['train', 'test', 'visualize']:
+    if run_mode in ['train', 'test', 'visualize', 'none']:
         if network_type == 'SUP':
             config = config_SUP_SI if train_SI else config_SUP_IS
         elif network_type == 'GAN':
@@ -129,7 +129,7 @@ def setup_paths(run_mode, base_dirs, data_files, mode_files, test_ops, viz_ops):
         paths['sino_path'] = paths['tune_sino_path']
         paths['image_path'] = paths['tune_image_path']
         checkpoint_file = ''
-    elif run_mode == 'train':
+    elif run_mode == 'train':]:
         paths['sino_path'] = paths['train_sino_path']
         paths['image_path'] = paths['train_image_path']
         checkpoint_file = mode_files['train_checkpoint_file']
@@ -137,17 +137,21 @@ def setup_paths(run_mode, base_dirs, data_files, mode_files, test_ops, viz_ops):
         if test_set_type == 'test':
             paths['sino_path'] = paths['test_sino_path']
             paths['image_path'] = paths['test_image_path']
-        else:
+        elif test_set_type == 'train':
             paths['sino_path'] = paths['train_sino_path']
             paths['image_path'] = paths['train_image_path']
+        else:
+            raise ValueError(f"Test_set_type not 'test' or 'train': {test_set_type}")
         checkpoint_file = mode_files['test_checkpoint_file']
-    elif run_mode == 'visualize':
+    elif run_mode in ['visualize', 'none']:
         if visualize_type == 'test':
             paths['sino_path'] = paths['test_sino_path']
             paths['image_path'] = paths['test_image_path']
-        else:
+        elif visualize_type == 'train':
             paths['sino_path'] = paths['train_sino_path']
             paths['image_path'] = paths['train_image_path']
+        else:
+            raise ValueError(f"Visualize_type not 'test' or 'train': {visualize_type}")
         checkpoint_file = mode_files['visualize_checkpoint_file']
     else:
         raise ValueError(f"Unknown run_mode: {run_mode}")
@@ -234,7 +238,7 @@ def setup_settings( run_mode, common_settings, tune_opts, train_opts, test_opts,
         settings['test_display_step'] = test_opts['test_display_step']
         settings['test_batch_size'] = test_opts['test_batch_size']
     
-    elif run_mode == 'visualize':
+    elif run_mode in ['visualize', 'none']:
         settings['augment'] = False
         settings['shuffle'] = viz_opts['visualize_shuffle']
         settings['num_epochs'] = 1
