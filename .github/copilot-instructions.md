@@ -6,7 +6,7 @@
 ## Code Structure
 Python package (FlexCNN_for_Medical_Physics) is installed and used from within a single jupyter notebook.
 This notebook is located here: ./FlexCNN_Medical_Physics/context_only/stitching_notebook.ipynb
-  Use this notebook (./FlexCNN_Medical_Physics/context_only/stitching_notebook.ipynb) to understand how different modules and functions interact.
+  Use this notebook (./FlexCNN_Medical_Physics/stitching_notebook.ipynb) to understand how different modules and functions interact.
 
 ## Code Style
 - Avoid matlotlib unless necessary for specific customizations. Prefer Pandas built-in plotting functions for simplicity.
@@ -25,7 +25,7 @@ This notebook is located here: ./FlexCNN_Medical_Physics/context_only/stitching_
 - Use ALL_CAPS for constants
 
 ## Comments
-- When deriving new code from existing code, keep comments the same.
+- When deriving new code from existing code, KEEP comments the same.
 
 ## Code Quality
 - Use meaningful variable and function names that clearly describe their purpose
