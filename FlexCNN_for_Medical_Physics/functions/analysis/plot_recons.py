@@ -112,10 +112,10 @@ OLDER VERSION BELOW - TO BE DEPRECATED
 
 ## CNN Outputs ##
 def CNN_reconstruct(sino_tensor, config, checkpoint_dirPath, checkpoint_fileName):
-    '''
-    Construct CNN reconstructions of images of a sinogram tensor.
-    Config must contain: sino_size, sino_channels, image_channels.
-    '''
+
+    #Construct CNN reconstructions of images of a sinogram tensor.
+    #Config must contain: sino_size, sino_channels, image_channels.
+
     gen = Generator(config=config, gen_SI=True).to(device)
     checkpoint_path = os.path.join(checkpoint_dirPath, checkpoint_fileName)
     checkpoint = torch.load(checkpoint_path)
