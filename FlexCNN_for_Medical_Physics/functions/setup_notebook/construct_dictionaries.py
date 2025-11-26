@@ -129,7 +129,7 @@ def setup_paths(run_mode, base_dirs, data_files, mode_files, test_ops, viz_ops):
         paths['sino_path'] = paths['tune_sino_path']
         paths['image_path'] = paths['tune_image_path']
         checkpoint_file = ''
-    elif run_mode == 'train':]:
+    elif run_mode == 'train':
         paths['sino_path'] = paths['train_sino_path']
         paths['image_path'] = paths['train_image_path']
         checkpoint_file = mode_files['train_checkpoint_file']
