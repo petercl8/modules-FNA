@@ -42,6 +42,9 @@ def tune_networks(config, paths, settings, tune_opts, base_dirs, trainable='SUP'
     result_grid : ray.tune.ResultGrid
         Fitted tuning result grid.
     """
+    print('='*60)
+    print('TUNE_NETWORKS INVOKED')
+    print('='*60)
 
     # Extract tune options
     tune_for = tune_opts['tune_for']
