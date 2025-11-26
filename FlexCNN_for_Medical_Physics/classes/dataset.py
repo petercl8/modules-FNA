@@ -7,6 +7,7 @@ import numpy as np
 resize_warned = False  # Module-level flag to ensure warning is printed only once
 
 def NpArrayDataLoader(image_array, sino_array, config, augment=False, index=0, device='cuda'):
+    
     global resize_warned
 
     '''
@@ -177,7 +178,7 @@ class NpArrayDataSet(Dataset):
     In the dataset used in our first two conference papers, the data repeat every 17500 steps but with different augmentations.
     For the dataset with FORE rebinning, the dataset contains no augmented examples; all augmentation is performed on the fly.
     '''
-    def __init__(self, image_path, sino_path, config, augment=False, offset=0, num_examples=-1, sample_division=1):
+    def __init__(self, image_path, sino_path, config, augment=False, offset=0, num_examples=-1, sample_division=1, device='cuda'):
         '''
         image_path:         path to images in data set
         sino_path:          path to sinograms in data set
@@ -205,6 +206,7 @@ class NpArrayDataSet(Dataset):
         self.config = config
         self.augment = augment
         self.sample_division = sample_division
+        self.device = device
 
     def __len__(self):
         length = int(len(self.image_array)/self.sample_division)
@@ -214,8 +216,12 @@ class NpArrayDataSet(Dataset):
 
         idx = idx*self.sample_division
 
-        sino_ground, sino_ground_scaled, image_ground, image_ground_scaled = NpArrayDataLoader(self.image_array, self.sino_array, self.config,
-                                                                                augment=self.augment, index=idx, device='cuda')
+        device_arg = self.device
+        if device_arg == 'cuda' and not torch.cuda.is_available():
+            device_arg = 'cpu'
+        sino_ground, sino_ground_scaled, image_ground, image_ground_scaled = NpArrayDataLoader(
+            self.image_array, self.sino_array, self.config,
+            augment=self.augment, index=idx, device=device_arg)
 
         return sino_ground, sino_ground_scaled, image_ground, image_ground_scaled
         # Returns both original, as well as altered, sinograms and images
