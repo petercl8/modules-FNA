@@ -57,9 +57,6 @@ def tune_networks(config, paths, settings, tune_opts, base_dirs, trainable='SUP'
     gpus_per_trial = tune_opts.get('gpus_per_trial', num_GPUs)
 
     ray.init(ignore_reinit_error=True, num_cpus=num_CPUs, num_gpus=num_GPUs)
-    trainable_with_resources = tune.with_resources(trainable_param, {"CPU": cpus_per_trial, "GPU": gpus_per_trial})
-
-
 
     os.environ.pop("AIR_VERBOSITY", None)
 
@@ -155,13 +152,13 @@ def tune_networks(config, paths, settings, tune_opts, base_dirs, trainable='SUP'
     ## Which trainable do you want to use? ##
     if trainable == 'SUP':
         trainable_param = tune.with_parameters(run_SUP, paths=paths, settings=settings)
-        trainable_with_resources = tune.with_resources(trainable_param, {"CPU": num_CPUs, "GPU": num_GPUs})
+        trainable_with_resources = tune.with_resources(trainable_param, {"CPU": cpus_per_trial, "GPU": gpus_per_trial})
     elif trainable == 'GAN':
         trainable_param = tune.with_parameters(run_GAN, paths=paths, settings=settings)
-        trainable_with_resources = tune.with_resources(trainable_param, {"CPU": num_CPUs, "GPU": num_GPUs})
+        trainable_with_resources = tune.with_resources(trainable_param, {"CPU": cpus_per_trial, "GPU": gpus_per_trial})
     elif trainable == 'CYCLE':
         trainable_param = tune.with_parameters(run_CYCLE, paths=paths, settings=settings)
-        trainable_with_resources = tune.with_resources(trainable_param, {"CPU": num_CPUs, "GPU": num_GPUs})
+        trainable_with_resources = tune.with_resources(trainable_param, {"CPU": cpus_per_trial, "GPU": gpus_per_trial})
     else:
         raise ValueError(f"Unsupported trainable='{trainable}'. Expected 'SUP', 'GAN', or 'CYCLE'.")
 
