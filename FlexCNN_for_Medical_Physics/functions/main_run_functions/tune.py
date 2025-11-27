@@ -42,6 +42,12 @@ def tune_networks(config, paths, settings, tune_opts, base_dirs, trainable='SUP'
     result_grid : ray.tune.ResultGrid
         Fitted tuning result grid.
     """
+    # Force clean Ray restart to pick up new resource config
+    try:
+        ray.shutdown()
+    except:
+        pass
+
 
     # Extract tune options
     tune_for = tune_opts['tune_for']
