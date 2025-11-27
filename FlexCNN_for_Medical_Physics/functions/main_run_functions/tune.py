@@ -42,9 +42,6 @@ def tune_networks(config, paths, settings, tune_opts, base_dirs, trainable='SUP'
     result_grid : ray.tune.ResultGrid
         Fitted tuning result grid.
     """
-    print('='*60)
-    print('TUNE_NETWORKS INVOKED')
-    print('='*60)
 
     # Extract tune options
     tune_for = tune_opts['tune_for']
@@ -56,15 +53,14 @@ def tune_networks(config, paths, settings, tune_opts, base_dirs, trainable='SUP'
     grace_period = tune_opts.get('grace_period', 1)
     num_CPUs = tune_opts.get('num_CPUs', 1)
     num_GPUs = tune_opts.get('num_GPUs', 0)
+    cpus_per_trial = tune_opts.get('cpus_per_trial', 2)
+    gpus_per_trial = tune_opts.get('gpus_per_trial', num_GPUs)
 
-    print('RESOURCES')
-    print('num_CPUs:', num_CPUs)
-    print('num_GPUs:', num_GPUs)
-    print('device:', settings['device'])
-
-
-    # Initialize Ray to advertise available resources
     ray.init(ignore_reinit_error=True, num_cpus=num_CPUs, num_gpus=num_GPUs)
+    trainable_with_resources = tune.with_resources(trainable_param, {"CPU": cpus_per_trial, "GPU": gpus_per_trial})
+
+
+
     os.environ.pop("AIR_VERBOSITY", None)
 
     # Extract tune_storage_dirPath directly from paths
