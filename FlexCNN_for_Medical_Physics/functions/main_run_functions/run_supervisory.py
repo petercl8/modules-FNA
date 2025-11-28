@@ -107,18 +107,6 @@ def run_SUP(config, paths, settings):
         shuffle=shuffle
     )
 
-    # Heartbeat report to Ray Tune.
-    if run_mode == 'tune' and session is not None:
-        # Immediate heartbeat so the trial shows as RUNNING and reporter columns exist
-        session.report({
-            'MSE': 0.0,
-            'SSIM': 0.0,
-            'CUSTOM': 0.0,
-            'example_num': 0,
-            'batch_step': 0,
-            'epoch': 0
-        })
-
     # Checkpoint handling
     if load_state:
         checkpoint = torch.load(checkpoint_path)
